@@ -7,8 +7,10 @@ import {
   CardContent,
   Typography,
   Button,
+  Divider,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import GoogleIcon from "@mui/icons-material/Google";
 
 export default function SignIn() {
   return (
@@ -40,7 +42,7 @@ export default function SignIn() {
             Summarite にログイン
           </Typography>
           <Typography variant="body1" sx={{ color: "grey.500", mb: 4 }}>
-            GitHubアカウントでログインして、メトリクスダッシュボードにアクセスしましょう。
+            アカウントでログインして、メトリクスダッシュボードにアクセスしましょう。
           </Typography>
           <Button
             variant="contained"
@@ -52,9 +54,29 @@ export default function SignIn() {
               bgcolor: "grey.900",
               "&:hover": { bgcolor: "grey.800" },
               py: 1.5,
+              mb: 2,
             }}
           >
             GitHubでログイン
+          </Button>
+          <Divider sx={{ my: 2 }}>または</Divider>
+          <Button
+            variant="outlined"
+            fullWidth
+            size="large"
+            startIcon={<GoogleIcon />}
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            sx={{
+              borderColor: "grey.300",
+              color: "grey.700",
+              "&:hover": {
+                borderColor: "grey.400",
+                bgcolor: "grey.50",
+              },
+              py: 1.5,
+            }}
+          >
+            Googleでログイン
           </Button>
         </CardContent>
       </Card>
