@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  githubMetrics GithubMetric[]
+  jiraMetrics   JiraMetric[]
+  summaries     Summary[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model GithubMetric {
+  id           String   @id @default(cuid())
+  userId       String
+  periodStart  DateTime
+  periodEnd    DateTime
+  periodType   String
+
+  prsOpened    Int      @default(0)
+  prsMerged    Int      @default(0)
+  reviews      Int      @default(0)
+  issuesOpened Int      @default(0)
+  issuesClosed Int      @default(0)
+
+  rawData      Json?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodStart, periodEnd, periodType])
+  @@index([userId, periodType])
+}
+
+model JiraMetric {
+  id          String   @id @default(cuid())
+  userId      String
+  periodStart DateTime
+  periodEnd   DateTime
+  periodType  String
+
+  created     Int      @default(0)
+  done        Int      @default(0)
+  inProgress  Int      @default(0)
+  stalled     Int      @default(0)
+
+  rawData     Json?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodStart, periodEnd, periodType])
+  @@index([userId, periodType])
+}
+
+model Summary {
+  id          String   @id @default(cuid())
+  userId      String
+  periodStart DateTime
+  periodEnd   DateTime
+  periodType  String
+
+  content     String   @db.Text
+  model       String
+
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, periodType])
+}
