@@ -2,10 +2,11 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { SummaryResponse } from "@/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import Image from "next/image";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -15,19 +16,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (session) {
-      fetchSummary();
-    }
-  }, [session, activeTab]);
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -47,7 +36,19 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (session) {
+      fetchSummary();
+    }
+  }, [session, fetchSummary]);
 
   if (status === "loading") {
     return (
@@ -75,10 +76,12 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <span className="text-gray-300 text-sm">{session.user?.name}</span>
             {session.user?.image && (
-              <img
+              <Image
                 src={session.user.image}
                 alt="Avatar"
-                className="w-8 h-8 rounded-full"
+                width={32}
+                height={32}
+                className="rounded-full"
               />
             )}
             <button
