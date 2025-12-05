@@ -1,36 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Summarite
 
-## Getting Started
+GitHub と Jira のデータを統合し、開発チームの成果を週次・月次で可視化。AI による要約付きダッシュボードを提供するアプリケーション。
 
-First, run the development server:
+## 概要
+
+### 対象ユーザー
+- チームで活動量を把握したい開発者 / PM
+- スプリント振り返りを効率化したいスクラムチーム
+
+### 主な機能
+- GitHub OAuth連携 → PR / Issue / レビュー数の取得
+- Jira OAuth連携 → Issue状態の取得（Done / Created / In Progress / Stalled）
+- 週次・月次メトリクス集計API
+- AI要約生成（OpenAI または Claude）
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 16 (App Router)
+- **言語**: TypeScript
+- **データベース**: PostgreSQL (Supabase)
+- **ORM**: Prisma 7
+- **認証**: NextAuth.js
+- **AI**: OpenAI / Anthropic Claude
+- **スタイリング**: Tailwind CSS
+- **デプロイ**: Vercel
+
+## セットアップ
+
+### 必要条件
+- Node.js 20+
+- PostgreSQL（またはSupabase）
+
+### インストール
+
+```bash
+# 依存関係のインストール
+npm install
+
+# Prismaクライアント生成
+npx prisma generate
+```
+
+### 環境変数の設定
+
+`.env.example` を `.env` にコピーして、必要な値を設定してください。
+
+```bash
+cp .env.example .env
+```
+
+```env
+# Database (Supabase)
+DATABASE_URL="postgresql://..."
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+
+# GitHub OAuth
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+
+# Jira OAuth (optional)
+JIRA_CLIENT_ID="your-jira-client-id"
+JIRA_CLIENT_SECRET="your-jira-client-secret"
+
+# AI Provider
+ANTHROPIC_API_KEY="your-anthropic-api-key"
+# or
+OPENAI_API_KEY="your-openai-api-key"
+
+AI_PROVIDER="anthropic"  # or "openai"
+```
+
+### データベースのセットアップ
+
+```bash
+# マイグレーション実行
+npx prisma migrate dev --name init
+```
+
+## 開発
+
+### 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) をブラウザで開いてください。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### コマンド一覧
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| コマンド | 説明 |
+|---------|------|
+| `npm run dev` | 開発サーバーを起動 |
+| `npm run build` | プロダクションビルド |
+| `npm run start` | プロダクションサーバーを起動 |
+| `npm run lint` | ESLintでコードをチェック |
+| `npm run type-check` | TypeScript型チェック |
 
-## Learn More
+## API エンドポイント
 
-To learn more about Next.js, take a look at the following resources:
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| GET | `/api/summary/weekly` | 週次メトリクス + AI要約 |
+| GET | `/api/summary/monthly` | 月次メトリクス + AI要約 |
+| GET | `/api/connect/jira` | Jira OAuth連携 |
+| GET/POST | `/api/auth/[...nextauth]` | NextAuth認証 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### レスポンス例
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```json
+{
+  "github": {
+    "prsOpened": 5,
+    "prsMerged": 3,
+    "reviews": 8,
+    "issuesOpened": 2,
+    "issuesClosed": 4
+  },
+  "jira": {
+    "created": 6,
+    "done": 4,
+    "inProgress": 3,
+    "stalled": 1
+  },
+  "summary": "AI generated summary...",
+  "periodStart": "2024-01-01T00:00:00.000Z",
+  "periodEnd": "2024-01-07T23:59:59.999Z",
+  "periodType": "weekly"
+}
+```
 
-## Deploy on Vercel
+## CI/CD
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+GitHub Actionsで以下のチェックが自動実行されます：
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Type Check** (`type-check.yml`): TypeScript型チェック
+- **Lint** (`lint.yml`): ESLintによるコードチェック
+
+## プロジェクト構成
+
+```
+summarite/
+├── .github/workflows/     # GitHub Actions
+├── prisma/
+│   └── schema.prisma      # データベーススキーマ
+├── src/
+│   ├── app/
+│   │   ├── api/           # APIルート
+│   │   ├── auth/          # 認証ページ
+│   │   └── dashboard/     # ダッシュボード
+│   ├── components/        # Reactコンポーネント
+│   ├── lib/               # ユーティリティ
+│   ├── services/          # ビジネスロジック
+│   └── types/             # 型定義
+└── docs/
+    └── spec.md            # 仕様書
+```
+
+## ライセンス
+
+MIT

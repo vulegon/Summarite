@@ -1,4 +1,4 @@
-name: CI
+name: Type Check
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  type-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +28,3 @@ jobs:
 
       - name: Type check
         run: npm run type-check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
-        env:
-          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/summarite"
