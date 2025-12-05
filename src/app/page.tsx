@@ -3,6 +3,21 @@
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Avatar,
+  Grid,
+  CircularProgress,
+} from "@mui/material";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import GitHubIcon from "@mui/icons-material/GitHub";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -16,64 +31,160 @@ export default function Home() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "grey.50",
+        }}
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-white mb-4">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f5f5 0%, #ffffff 50%, #fafafa 100%)",
+      }}
+    >
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Typography
+            variant="h2"
+            component="h1"
+            sx={{ fontWeight: "bold", color: "grey.900", mb: 2 }}
+          >
             Summarite
-          </h1>
-          <p className="text-xl text-gray-300 mb-8">
+          </Typography>
+          <Typography variant="h5" sx={{ color: "grey.600", mb: 3 }}>
             GitHub & Jira のデータを統合し、開発チームの成果を可視化
-          </p>
-          <p className="text-gray-400 mb-12 max-w-2xl mx-auto">
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{ color: "grey.500", mb: 6, maxWidth: 600, mx: "auto" }}
+          >
             週次・月次のメトリクスを自動集計し、AIが分析・要約。
             チームの活動をひと目で把握できます。
-          </p>
+          </Typography>
 
-          <div className="space-y-4">
-            <button
-              onClick={() => signIn("github")}
-              className="inline-flex items-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors border border-gray-600"
-            >
-              <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-              </svg>
-              GitHubでログイン
-            </button>
-          </div>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<GitHubIcon />}
+            onClick={() => signIn("github")}
+            sx={{
+              bgcolor: "grey.900",
+              "&:hover": { bgcolor: "grey.800" },
+              px: 4,
+              py: 1.5,
+              fontSize: "1rem",
+            }}
+          >
+            GitHubでログイン
+          </Button>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-              <div className="text-3xl mb-4">📊</div>
-              <h3 className="text-lg font-semibold text-white mb-2">メトリクス集計</h3>
-              <p className="text-gray-400 text-sm">
-                PR、Issue、レビュー数を自動集計
-              </p>
-            </div>
-            <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-              <div className="text-3xl mb-4">🤖</div>
-              <h3 className="text-lg font-semibold text-white mb-2">AI要約</h3>
-              <p className="text-gray-400 text-sm">
-                活動データをAIが分析・要約
-              </p>
-            </div>
-            <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700">
-              <div className="text-3xl mb-4">📅</div>
-              <h3 className="text-lg font-semibold text-white mb-2">週次・月次レポート</h3>
-              <p className="text-gray-400 text-sm">
-                定期的なふりかえりをサポート
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          <Grid container spacing={4} sx={{ mt: 8, maxWidth: 900, mx: "auto" }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card
+                sx={{
+                  height: "100%",
+                  boxShadow: 1,
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                <CardContent sx={{ textAlign: "center", py: 4 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: "blue.100",
+                      width: 56,
+                      height: 56,
+                      mx: "auto",
+                      mb: 2,
+                      backgroundColor: "#dbeafe",
+                    }}
+                  >
+                    <BarChartIcon sx={{ color: "#2563eb", fontSize: 32 }} />
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                    メトリクス集計
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    PR、Issue、レビュー数を自動集計
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card
+                sx={{
+                  height: "100%",
+                  boxShadow: 1,
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                <CardContent sx={{ textAlign: "center", py: 4 }}>
+                  <Avatar
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      mx: "auto",
+                      mb: 2,
+                      backgroundColor: "#f3e8ff",
+                    }}
+                  >
+                    <AutoAwesomeIcon sx={{ color: "#9333ea", fontSize: 32 }} />
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                    AI要約
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    活動データをAIが分析・要約
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card
+                sx={{
+                  height: "100%",
+                  boxShadow: 1,
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                <CardContent sx={{ textAlign: "center", py: 4 }}>
+                  <Avatar
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      mx: "auto",
+                      mb: 2,
+                      backgroundColor: "#dcfce7",
+                    }}
+                  >
+                    <CalendarMonthIcon sx={{ color: "#16a34a", fontSize: 32 }} />
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                    週次・月次レポート
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    定期的なふりかえりをサポート
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      </Container>
+    </Box>
   );
 }
