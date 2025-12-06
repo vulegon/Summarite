@@ -469,17 +469,22 @@ export default function Home() {
                   height: 80,
                   mx: "auto",
                   mb: 2,
-                  bgcolor: "#1a1a2e",
+                  bgcolor: "#667eea",
+                  color: "white",
                   fontSize: "1.5rem",
                   fontWeight: 700,
+                  boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
                 }}
               >
                 1
               </Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, mb: 1, color: "grey.900" }}
+              >
                 ログイン
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
                 GitHubまたはGoogleアカウントでログインし、
                 サービスへのアクセスを許可します。
               </Typography>
@@ -494,17 +499,22 @@ export default function Home() {
                   height: 80,
                   mx: "auto",
                   mb: 2,
-                  bgcolor: "#1a1a2e",
+                  bgcolor: "#667eea",
+                  color: "white",
                   fontSize: "1.5rem",
                   fontWeight: 700,
+                  boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
                 }}
               >
                 2
               </Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, mb: 1, color: "grey.900" }}
+              >
                 Jiraを連携（任意）
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
                 必要に応じてJira Cloudを連携し、
                 チケット情報も統合できます。
               </Typography>
@@ -519,17 +529,22 @@ export default function Home() {
                   height: 80,
                   mx: "auto",
                   mb: 2,
-                  bgcolor: "#1a1a2e",
+                  bgcolor: "#667eea",
+                  color: "white",
                   fontSize: "1.5rem",
                   fontWeight: 700,
+                  boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
                 }}
               >
                 3
               </Avatar>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, mb: 1, color: "grey.900" }}
+              >
                 レポートを確認
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
                 ダッシュボードで週次・月次のメトリクスと
                 AI要約を確認できます。
               </Typography>

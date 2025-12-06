@@ -66,6 +66,9 @@ src/
 - ESLint: `eslint-config-next/core-web-vitals` と `eslint-config-next/typescript` を使用
 - コードを変更した後は `npm run type-check` と `npm run lint` でエラーがないことを確認
 - Prismaスキーマを変更した場合は `npx prisma generate` を実行
+- **index.tsによるbarrel exportは使用しない** - 各モジュールは直接インポートする
+  - Good: `import { GoogleIcon } from "@/components/icons/GoogleIcon"`
+  - Bad: `import { GoogleIcon } from "@/components/icons"`
 
 ## 環境変数
 

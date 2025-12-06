@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import "./globals.css";
 import { SessionProvider } from "@/components/SessionProvider";
 
@@ -24,11 +25,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
-        <SessionProvider>{children}</SessionProvider>
+        <AppRouterCacheProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

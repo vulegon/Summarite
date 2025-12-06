@@ -8,9 +8,11 @@ import {
   Typography,
   Button,
   Divider,
+  Container,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import GoogleIcon from "@mui/icons-material/Google";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 
 export default function SignIn() {
   return (
@@ -20,66 +22,172 @@ export default function SignIn() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #f5f5f5 0%, #ffffff 50%, #fafafa 100%)",
+        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <Card
+      {/* Background pattern */}
+      <Box
         sx={{
-          maxWidth: 400,
-          width: "100%",
-          mx: 2,
-          boxShadow: 3,
-          border: "1px solid",
-          borderColor: "grey.200",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.1,
+          backgroundImage: `radial-gradient(circle at 25% 25%, #fff 1px, transparent 1px),
+                            radial-gradient(circle at 75% 75%, #fff 1px, transparent 1px)`,
+          backgroundSize: "50px 50px",
         }}
-      >
-        <CardContent sx={{ p: 4, textAlign: "center" }}>
+      />
+
+      <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
+        <Card
+          sx={{
+            maxWidth: 420,
+            width: "100%",
+            mx: "auto",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            borderRadius: 3,
+            overflow: "hidden",
+          }}
+        >
+          {/* Header with gradient */}
+          <Box
+            sx={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              py: 4,
+              px: 3,
+              textAlign: "center",
+            }}
+          >
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                bgcolor: "rgba(255,255,255,0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+              }}
+            >
+              <AutoAwesomeIcon sx={{ fontSize: 32, color: "white" }} />
+            </Box>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: 700, color: "white", mb: 1 }}
+            >
+              Summarite
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "rgba(255,255,255,0.8)" }}
+            >
+              開発チームの成果をAIが自動で要約
+            </Typography>
+          </Box>
+
+          <CardContent sx={{ p: 4 }}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "grey.600",
+                mb: 4,
+                textAlign: "center",
+              }}
+            >
+              アカウントでログインして
+              <br />
+              ダッシュボードにアクセス
+            </Typography>
+
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              startIcon={<GitHubIcon />}
+              onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+              sx={{
+                bgcolor: "#24292e",
+                "&:hover": { bgcolor: "#1b1f23" },
+                py: 1.5,
+                mb: 2,
+                borderRadius: 2,
+                textTransform: "none",
+                fontSize: "1rem",
+                fontWeight: 600,
+              }}
+            >
+              GitHubでログイン
+            </Button>
+
+            <Divider sx={{ my: 2.5 }}>
+              <Typography variant="body2" sx={{ color: "grey.400", px: 2 }}>
+                または
+              </Typography>
+            </Divider>
+
+            <Button
+              variant="outlined"
+              fullWidth
+              size="large"
+              startIcon={<GoogleIcon />}
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              sx={{
+                borderColor: "grey.300",
+                color: "grey.700",
+                "&:hover": {
+                  borderColor: "grey.400",
+                  bgcolor: "grey.50",
+                },
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: "none",
+                fontSize: "1rem",
+                fontWeight: 600,
+              }}
+            >
+              Googleでログイン
+            </Button>
+
+            <Typography
+              variant="caption"
+              sx={{
+                display: "block",
+                textAlign: "center",
+                color: "grey.500",
+                mt: 4,
+              }}
+            >
+              ログインすることで、利用規約に同意したものとみなされます
+            </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Back to home link */}
+        <Box sx={{ textAlign: "center", mt: 4 }}>
           <Typography
-            variant="h5"
-            component="h1"
-            sx={{ fontWeight: "bold", color: "grey.900", mb: 2 }}
-          >
-            Summarite にログイン
-          </Typography>
-          <Typography variant="body1" sx={{ color: "grey.500", mb: 4 }}>
-            アカウントでログインして、メトリクスダッシュボードにアクセスしましょう。
-          </Typography>
-          <Button
-            variant="contained"
-            fullWidth
-            size="large"
-            startIcon={<GitHubIcon />}
-            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+            component="a"
+            href="/"
             sx={{
-              bgcolor: "grey.900",
-              "&:hover": { bgcolor: "grey.800" },
-              py: 1.5,
-              mb: 2,
-            }}
-          >
-            GitHubでログイン
-          </Button>
-          <Divider sx={{ my: 2 }}>または</Divider>
-          <Button
-            variant="outlined"
-            fullWidth
-            size="large"
-            startIcon={<GoogleIcon />}
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            sx={{
-              borderColor: "grey.300",
-              color: "grey.700",
+              color: "rgba(255,255,255,0.7)",
+              textDecoration: "none",
+              fontSize: "0.875rem",
               "&:hover": {
-                borderColor: "grey.400",
-                bgcolor: "grey.50",
+                color: "white",
+                textDecoration: "underline",
               },
-              py: 1.5,
             }}
           >
-            Googleでログイン
-          </Button>
-        </CardContent>
-      </Card>
+            トップページに戻る
+          </Typography>
+        </Box>
+      </Container>
     </Box>
   );
 }

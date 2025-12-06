@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { SummaryResponse } from "@/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -28,6 +28,8 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LinkIcon from "@mui/icons-material/Link";
 
+const emptySubscribe = () => () => {};
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -35,6 +37,11 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
@@ -70,7 +77,7 @@ export default function Dashboard() {
     }
   }, [session, fetchSummary]);
 
-  if (status === "loading") {
+  if (!mounted || status === "loading") {
     return (
       <Box
         sx={{
