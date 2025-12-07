@@ -22,6 +22,9 @@ import {
   Paper,
   ToggleButton,
   ToggleButtonGroup,
+  Popover,
+  IconButton,
+  Divider,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -37,6 +40,7 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -112,6 +116,19 @@ export default function Dashboard() {
     }
   };
 
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleUserMenuClose();
+    signOut();
+  };
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <AppBar position="static" sx={{ bgcolor: "white", boxShadow: 1 }}>
@@ -123,26 +140,68 @@ export default function Dashboard() {
             Summarite
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="body2" sx={{ color: "grey.600" }}>
-              {session.user?.name}
-            </Typography>
-            {session.user?.image && (
-              <Image
-                src={session.user.image}
-                alt="Avatar"
-                width={32}
-                height={32}
-                style={{ borderRadius: "50%" }}
-              />
-            )}
-            <Button
-              size="small"
-              startIcon={<LogoutIcon />}
-              onClick={() => signOut()}
-              sx={{ color: "grey.600" }}
+            <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.5 }}>
+              {session.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt="Avatar"
+                  width={36}
+                  height={36}
+                  style={{ borderRadius: "50%" }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    bgcolor: "grey.300",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {session.user?.name?.charAt(0) || "U"}
+                </Box>
+              )}
+            </IconButton>
+            <Popover
+              open={Boolean(anchorEl)}
+              anchorEl={anchorEl}
+              onClose={handleUserMenuClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              sx={{ mt: 1 }}
             >
-              ログアウト
-            </Button>
+              <Box sx={{ p: 2, minWidth: 200 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  {session.user?.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>
+                  {session.user?.email}
+                </Typography>
+                <Divider sx={{ my: 1 }} />
+                <Button
+                  fullWidth
+                  size="small"
+                  startIcon={<LogoutIcon />}
+                  onClick={handleLogout}
+                  sx={{
+                    color: "error.main",
+                    justifyContent: "flex-start",
+                    "&:hover": { bgcolor: "error.50" },
+                  }}
+                >
+                  ログアウト
+                </Button>
+              </Box>
+            </Popover>
           </Box>
         </Toolbar>
       </AppBar>
