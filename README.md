@@ -76,9 +76,26 @@ AI_PROVIDER="anthropic"  # or "openai"
 ### データベースのセットアップ
 
 ```bash
-# マイグレーション実行
+# マイグレーション実行（ローカル）
 npx prisma migrate dev --name init
 ```
+
+### スキーマ変更時の手順
+
+1. `prisma/schema.prisma` を編集
+
+2. マイグレーションファイルを作成
+   ```bash
+   npx prisma migrate dev --name 変更内容
+   ```
+
+3. 作成されたマイグレーションファイルをコミット
+   ```bash
+   git add prisma/migrations
+   git commit -m "Add migration: 変更内容"
+   ```
+
+4. mainブランチにpush → Vercelでビルド時に `prisma migrate deploy` が自動実行され、本番DBに適用
 
 ## 開発
 
