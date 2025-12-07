@@ -33,6 +33,7 @@ import MergeIcon from "@mui/icons-material/Merge";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import { SummariteLogo } from "@/components/icons/SummariteLogo";
 
 const emptySubscribe = () => () => {};
 
@@ -87,6 +88,9 @@ export default function Home() {
         />
         <Container maxWidth="lg" sx={{ position: "relative" }}>
           <Box sx={{ textAlign: "center", maxWidth: 800, mx: "auto" }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+              <SummariteLogo size={80} />
+            </Box>
             <Chip
               label="GitHub & Jira 連携"
               sx={{

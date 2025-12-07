@@ -7,6 +7,7 @@ import { SummaryResponse } from "@/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Box,
   Container,
@@ -16,27 +17,35 @@ import {
   CardContent,
   Grid,
   CircularProgress,
-  AppBar,
-  Toolbar,
-  Alert,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup,
   Popover,
   IconButton,
   Divider,
+  Avatar,
+  Chip,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import LogoutIcon from "@mui/icons-material/Logout";
-import LinkIcon from "@mui/icons-material/Link";
+import AddLinkIcon from "@mui/icons-material/AddLink";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import MergeIcon from "@mui/icons-material/Merge";
+import RateReviewIcon from "@mui/icons-material/RateReview";
+import BugReportIcon from "@mui/icons-material/BugReport";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import WarningIcon from "@mui/icons-material/Warning";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import { SummariteLogo } from "@/components/icons/SummariteLogo";
 
 const emptySubscribe = () => () => {};
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"weekly" | "monthly">("weekly");
+  const [activeTab, setActiveTab] = useState(0);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +56,13 @@ export default function Dashboard() {
     () => false
   );
 
+  const periodType = activeTab === 0 ? "weekly" : "monthly";
+
   const fetchSummary = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = activeTab === "weekly"
+      const endpoint = periodType === "weekly"
         ? "/api/summary/weekly"
         : "/api/summary/monthly";
       const response = await fetch(endpoint);
@@ -67,7 +78,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [periodType]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -89,10 +100,15 @@ export default function Dashboard() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: "grey.50",
+          background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
         }}
       >
-        <CircularProgress />
+        <Box sx={{ textAlign: "center" }}>
+          <CircularProgress sx={{ color: "#667eea", mb: 2 }} />
+          <Typography sx={{ color: "rgba(0,0,0,0.5)" }}>
+            読み込み中...
+          </Typography>
+        </Box>
       </Box>
     );
   }
@@ -104,16 +120,11 @@ export default function Dashboard() {
   const formatPeriod = (start: string, end: string) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
-    return `${format(startDate, "yyyy/MM/dd", { locale: ja })} - ${format(endDate, "yyyy/MM/dd", { locale: ja })}`;
+    return `${format(startDate, "M月d日", { locale: ja })} 〜 ${format(endDate, "M月d日", { locale: ja })}`;
   };
 
-  const handleTabChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    newValue: "weekly" | "monthly" | null
-  ) => {
-    if (newValue !== null) {
-      setActiveTab(newValue);
-    }
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -129,218 +140,441 @@ export default function Dashboard() {
     signOut();
   };
 
+  const githubMetrics = [
+    { label: "作成PR", value: summary?.github.prsOpened ?? 0, icon: TrendingUpIcon, color: "#3b82f6" },
+    { label: "マージPR", value: summary?.github.prsMerged ?? 0, icon: MergeIcon, color: "#22c55e" },
+    { label: "レビュー", value: summary?.github.reviews ?? 0, icon: RateReviewIcon, color: "#a855f7" },
+    { label: "作成Issue", value: summary?.github.issuesOpened ?? 0, icon: BugReportIcon, color: "#f97316" },
+    { label: "完了Issue", value: summary?.github.issuesClosed ?? 0, icon: CheckCircleIcon, color: "#06b6d4" },
+  ];
+
+  const jiraMetrics = [
+    { label: "作成", value: summary?.jira.created ?? 0, icon: TrendingUpIcon, color: "#0052CC" },
+    { label: "完了", value: summary?.jira.done ?? 0, icon: CheckCircleIcon, color: "#22c55e" },
+    { label: "進行中", value: summary?.jira.inProgress ?? 0, icon: HourglassEmptyIcon, color: "#06b6d4" },
+    { label: "停滞", value: summary?.jira.stalled ?? 0, icon: WarningIcon, color: "#ef4444" },
+  ];
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <AppBar position="static" sx={{ bgcolor: "white", boxShadow: 1 }}>
-        <Toolbar>
-          <Typography
-            variant="h6"
-            sx={{ flexGrow: 1, fontWeight: "bold", color: "grey.900" }}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
+      }}
+    >
+      {/* Header */}
+      <Box
+        component="header"
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              py: 2,
+            }}
           >
-            Summarite
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <IconButton onClick={handleUserMenuOpen} sx={{ p: 0.5 }}>
-              {session.user?.image ? (
-                <Image
-                  src={session.user.image}
-                  alt="Avatar"
-                  width={36}
-                  height={36}
-                  style={{ borderRadius: "50%" }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    bgcolor: "grey.300",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {session.user?.name?.charAt(0) || "U"}
-                </Box>
-              )}
-            </IconButton>
-            <Popover
-              open={Boolean(anchorEl)}
-              anchorEl={anchorEl}
-              onClose={handleUserMenuClose}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
+            <Box
+              component={Link}
+              href="/"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                textDecoration: "none",
               }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              sx={{ mt: 1 }}
             >
-              <Box sx={{ p: 2, minWidth: 200 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  {session.user?.name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>
-                  {session.user?.email}
-                </Typography>
-                <Divider sx={{ my: 1 }} />
-                <Button
-                  fullWidth
-                  size="small"
-                  startIcon={<LogoutIcon />}
-                  onClick={handleLogout}
-                  sx={{
-                    color: "error.main",
-                    justifyContent: "flex-start",
-                    "&:hover": { bgcolor: "error.50" },
-                  }}
-                >
-                  ログアウト
-                </Button>
-              </Box>
-            </Popover>
+              <SummariteLogo size={36} />
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: "1.5rem",
+                  color: "white",
+                }}
+              >
+                Summarite
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AddLinkIcon />}
+                href="/api/connect/jira"
+                sx={{
+                  borderColor: "rgba(255,255,255,0.3)",
+                  color: "rgba(255,255,255,0.9)",
+                  borderRadius: 2,
+                  textTransform: "none",
+                  "&:hover": {
+                    borderColor: "rgba(255,255,255,0.5)",
+                    bgcolor: "rgba(255,255,255,0.1)",
+                  },
+                }}
+              >
+                Jira連携
+              </Button>
+
+              <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
+                {session.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt="Avatar"
+                    width={40}
+                    height={40}
+                    style={{
+                      borderRadius: "50%",
+                      border: "2px solid rgba(102, 126, 234, 0.5)",
+                    }}
+                  />
+                ) : (
+                  <Avatar
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    }}
+                  >
+                    {session.user?.name?.charAt(0) || "U"}
+                  </Avatar>
+                )}
+              </IconButton>
+
+              <Popover
+                open={Boolean(anchorEl)}
+                anchorEl={anchorEl}
+                onClose={handleUserMenuClose}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                sx={{ mt: 1 }}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      bgcolor: "#1a1a2e",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 2,
+                      minWidth: 240,
+                      boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+                    },
+                  },
+                }}
+              >
+                <Box sx={{ p: 2.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                    {session.user?.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt="Avatar"
+                        width={48}
+                        height={48}
+                        style={{ borderRadius: "50%" }}
+                      />
+                    ) : (
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        }}
+                      >
+                        {session.user?.name?.charAt(0) || "U"}
+                      </Avatar>
+                    )}
+                    <Box>
+                      <Typography sx={{ fontWeight: 600, color: "white" }}>
+                        {session.user?.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.5)" }}>
+                        {session.user?.email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", my: 1.5 }} />
+                  <Button
+                    fullWidth
+                    startIcon={<LogoutIcon />}
+                    onClick={handleLogout}
+                    sx={{
+                      color: "rgba(255,255,255,0.7)",
+                      justifyContent: "flex-start",
+                      textTransform: "none",
+                      "&:hover": {
+                        bgcolor: "rgba(239, 68, 68, 0.15)",
+                        color: "#f87171",
+                      },
+                    }}
+                  >
+                    ログアウト
+                  </Button>
+                </Box>
+              </Popover>
+            </Box>
           </Box>
-        </Toolbar>
-      </AppBar>
+        </Container>
+      </Box>
 
+      {/* Main Content */}
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 4,
-          }}
-        >
-          <ToggleButtonGroup
-            value={activeTab}
-            exclusive
-            onChange={handleTabChange}
-            size="small"
-          >
-            <ToggleButton value="weekly">週次レポート</ToggleButton>
-            <ToggleButton value="monthly">月次レポート</ToggleButton>
-          </ToggleButtonGroup>
+        {/* Title Section */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 800,
+                color: "#1a1a2e",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              ダッシュボード
+            </Typography>
+            {summary && (
+              <Chip
+                icon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
+                label={formatPeriod(summary.periodStart, summary.periodEnd)}
+                sx={{
+                  bgcolor: "rgba(102, 126, 234, 0.1)",
+                  color: "#667eea",
+                  border: "1px solid rgba(102, 126, 234, 0.2)",
+                  "& .MuiChip-icon": { color: "#667eea" },
+                }}
+              />
+            )}
+          </Box>
 
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<LinkIcon />}
-            href="/api/connect/jira"
-            sx={{ borderColor: "grey.300", color: "grey.700" }}
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{
+              "& .MuiTabs-indicator": {
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                height: 3,
+                borderRadius: 2,
+              },
+              "& .MuiTab-root": {
+                color: "rgba(0,0,0,0.4)",
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "1rem",
+                minWidth: 100,
+                "&.Mui-selected": {
+                  color: "#1a1a2e",
+                },
+              },
+            }}
           >
-            Jiraを連携
-          </Button>
+            <Tab label="週次" />
+            <Tab label="月次" />
+          </Tabs>
         </Box>
 
         {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress />
+          <Box sx={{ display: "flex", justifyContent: "center", py: 12 }}>
+            <CircularProgress sx={{ color: "#667eea" }} />
           </Box>
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
-            {error}
-          </Alert>
+          <Card
+            sx={{
+              bgcolor: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+              borderRadius: 3,
+              mb: 4,
+            }}
+          >
+            <CardContent>
+              <Typography sx={{ color: "#dc2626" }}>{error}</Typography>
+            </CardContent>
+          </Card>
         )}
 
         {!loading && summary && (
-          <>
-            <Typography variant="body2" sx={{ color: "grey.500", mb: 3 }}>
-              期間: {formatPeriod(summary.periodStart, summary.periodEnd)}
-            </Typography>
-
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid size={{ xs: 12, lg: 6 }}>
-                <Card sx={{ boxShadow: 1, border: "1px solid", borderColor: "grey.200" }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                      <GitHubIcon sx={{ mr: 1, color: "grey.700" }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        GitHub
-                      </Typography>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="作成したPR" value={summary.github.prsOpened} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="マージしたPR" value={summary.github.prsMerged} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="レビュー" value={summary.github.reviews} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="作成したIssue" value={summary.github.issuesOpened} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="クローズしたIssue" value={summary.github.issuesClosed} />
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid size={{ xs: 12, lg: 6 }}>
-                <Card sx={{ boxShadow: 1, border: "1px solid", borderColor: "grey.200" }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                      <Box
-                        component="svg"
-                        sx={{ width: 24, height: 24, mr: 1, color: "grey.700" }}
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M11.571 11.429h-2.286v-2.286h2.286v2.286zm4.571 0h-2.286v-2.286h2.286v2.286zm4.572 0h-2.286v-2.286h2.286v2.286zm-9.143 4.571h-2.286v-2.286h2.286v2.286zm4.571 0h-2.286v-2.286h2.286v2.286zm4.572 0h-2.286v-2.286h2.286v2.286zm-9.143 4.572h-2.286v-2.286h2.286v2.286zm4.571 0h-2.286v-2.286h2.286v2.286zm4.572 0h-2.286v-2.286h2.286v2.286zm2.286-16h-2.286v2.857h-17.143v14.857h22.857v-17.714h-3.428zm1.143 16h-20.571v-12h20.571v12z" />
-                      </Box>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Jira
-                      </Typography>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="作成" value={summary.jira.created} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="完了" value={summary.jira.done} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard label="進行中" value={summary.jira.inProgress} />
-                      </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <MetricCard
-                          label="停滞"
-                          value={summary.jira.stalled}
-                          color="warning"
-                        />
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-
-            <Card sx={{ boxShadow: 1, border: "1px solid", borderColor: "grey.200" }}>
-              <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                  <AutoAwesomeIcon sx={{ mr: 1, color: "grey.700" }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    AI要約
+          <Grid container spacing={3}>
+            {/* GitHub Card */}
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Card
+                sx={{
+                  bgcolor: "white",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  transition: "transform 0.3s, box-shadow 0.3s",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 2.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    borderBottom: "1px solid rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      bgcolor: "#24292e",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <GitHubIcon sx={{ color: "white" }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                    GitHub
                   </Typography>
                 </Box>
-                <Typography
-                  variant="body1"
-                  sx={{ color: "grey.700", whiteSpace: "pre-wrap", lineHeight: 1.8 }}
+                <CardContent sx={{ p: 2.5 }}>
+                  <Grid container spacing={2}>
+                    {githubMetrics.map((metric) => (
+                      <Grid size={{ xs: 6 }} key={metric.label}>
+                        <MetricCard {...metric} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Jira Card */}
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Card
+                sx={{
+                  bgcolor: "white",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  transition: "transform 0.3s, box-shadow 0.3s",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 2.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    borderBottom: "1px solid rgba(0,0,0,0.06)",
+                  }}
                 >
-                  {summary.summary}
-                </Typography>
-              </CardContent>
-            </Card>
-          </>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      bgcolor: "#0052CC",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AssignmentIcon sx={{ color: "white" }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                    Jira
+                  </Typography>
+                </Box>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Grid container spacing={2}>
+                    {jiraMetrics.map((metric) => (
+                      <Grid size={{ xs: 6 }} key={metric.label}>
+                        <MetricCard {...metric} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* AI Summary Card */}
+            <Grid size={{ xs: 12 }}>
+              <Card
+                sx={{
+                  bgcolor: "white",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  position: "relative",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: "linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+                  }}
+                />
+                <Box
+                  sx={{
+                    p: 2.5,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    borderBottom: "1px solid rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AutoAwesomeIcon sx={{ color: "white" }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                      AI要約
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.5)" }}>
+                      Powered by AI
+                    </Typography>
+                  </Box>
+                </Box>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography
+                    sx={{
+                      color: "rgba(0,0,0,0.8)",
+                      whiteSpace: "pre-wrap",
+                      lineHeight: 2,
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {summary.summary}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         )}
       </Container>
     </Box>
@@ -350,41 +584,44 @@ export default function Dashboard() {
 function MetricCard({
   label,
   value,
-  color = "primary",
+  icon: Icon,
+  color,
 }: {
   label: string;
   value: number;
-  color?: "primary" | "warning" | "success" | "error";
+  icon: React.ElementType;
+  color: string;
 }) {
   return (
-    <Paper
+    <Box
       sx={{
         p: 2,
-        bgcolor: "grey.50",
-        border: "1px solid",
-        borderColor: "grey.100",
+        borderRadius: 3,
+        bgcolor: "rgba(0,0,0,0.02)",
+        border: "1px solid rgba(0,0,0,0.06)",
+        transition: "all 0.2s",
+        "&:hover": {
+          bgcolor: "rgba(0,0,0,0.04)",
+          borderColor: `${color}40`,
+        },
       }}
-      elevation={0}
     >
-      <Typography variant="body2" sx={{ color: "grey.500", mb: 0.5 }}>
-        {label}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+        <Icon sx={{ fontSize: 18, color: color }} />
+        <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.6)" }}>
+          {label}
+        </Typography>
+      </Box>
       <Typography
-        variant="h5"
+        variant="h4"
         sx={{
-          fontWeight: "bold",
-          color:
-            color === "primary"
-              ? "primary.main"
-              : color === "warning"
-              ? "warning.main"
-              : color === "success"
-              ? "success.main"
-              : "error.main",
+          fontWeight: 800,
+          color: color,
+          letterSpacing: "-0.02em",
         }}
       >
         {value}
       </Typography>
-    </Paper>
+    </Box>
   );
 }
