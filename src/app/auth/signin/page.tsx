@@ -1,6 +1,8 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import {
   Box,
   Card,
@@ -9,12 +11,16 @@ import {
   Button,
   Divider,
   Container,
+  CircularProgress,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
 
-export default function SignIn() {
+function SignInContent() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
   return (
     <Box
       sx={{
@@ -111,7 +117,7 @@ export default function SignIn() {
               fullWidth
               size="large"
               startIcon={<GitHubIcon />}
-              onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+              onClick={() => signIn("github", { callbackUrl })}
               sx={{
                 bgcolor: "#24292e",
                 "&:hover": { bgcolor: "#1b1f23" },
@@ -137,7 +143,7 @@ export default function SignIn() {
               fullWidth
               size="large"
               startIcon={<GoogleIcon />}
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              onClick={() => signIn("google", { callbackUrl })}
               sx={{
                 borderColor: "grey.300",
                 color: "grey.700",
@@ -189,5 +195,27 @@ export default function SignIn() {
         </Box>
       </Container>
     </Box>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense
+      fallback={
+        <Box
+          sx={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+          }}
+        >
+          <CircularProgress sx={{ color: "white" }} />
+        </Box>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }
