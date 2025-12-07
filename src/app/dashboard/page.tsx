@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { GithubMetrics, JiraMetrics, AIProvider } from "@/types";
@@ -276,29 +276,87 @@ export default function Dashboard() {
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AddLinkIcon />}
-                href="/api/connect/jira"
-                sx={{
-                  borderColor: "rgba(255,255,255,0.3)",
-                  color: "rgba(255,255,255,0.9)",
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                  px: { xs: 1.5, sm: 2 },
-                  "&:hover": {
-                    borderColor: "rgba(255,255,255,0.5)",
-                    bgcolor: "rgba(255,255,255,0.1)",
-                  },
-                  "& .MuiButton-startIcon": {
-                    display: { xs: "none", sm: "inherit" },
-                  },
-                }}
-              >
-                Jira連携
-              </Button>
+              {/* GitHub連携状態 */}
+              {session.user?.hasGithub ? (
+                <Chip
+                  icon={<GitHubIcon sx={{ fontSize: 16 }} />}
+                  label="GitHub連携済"
+                  size="small"
+                  sx={{
+                    bgcolor: "rgba(34, 197, 94, 0.2)",
+                    color: "#4ade80",
+                    border: "1px solid rgba(34, 197, 94, 0.3)",
+                    "& .MuiChip-icon": { color: "#4ade80" },
+                    fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                    display: { xs: "none", sm: "flex" },
+                  }}
+                />
+              ) : (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<GitHubIcon />}
+                  onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color: "rgba(255,255,255,0.9)",
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    px: { xs: 1.5, sm: 2 },
+                    "&:hover": {
+                      borderColor: "rgba(255,255,255,0.5)",
+                      bgcolor: "rgba(255,255,255,0.1)",
+                    },
+                    "& .MuiButton-startIcon": {
+                      display: { xs: "none", sm: "inherit" },
+                    },
+                  }}
+                >
+                  GitHub連携
+                </Button>
+              )}
+
+              {/* Jira連携状態 */}
+              {session.user?.hasJira ? (
+                <Chip
+                  icon={<AssignmentIcon sx={{ fontSize: 16 }} />}
+                  label="Jira連携済"
+                  size="small"
+                  sx={{
+                    bgcolor: "rgba(0, 82, 204, 0.2)",
+                    color: "#60a5fa",
+                    border: "1px solid rgba(0, 82, 204, 0.3)",
+                    "& .MuiChip-icon": { color: "#60a5fa" },
+                    fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                    display: { xs: "none", sm: "flex" },
+                  }}
+                />
+              ) : (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddLinkIcon />}
+                  href="/api/connect/jira"
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color: "rgba(255,255,255,0.9)",
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    px: { xs: 1.5, sm: 2 },
+                    "&:hover": {
+                      borderColor: "rgba(255,255,255,0.5)",
+                      bgcolor: "rgba(255,255,255,0.1)",
+                    },
+                    "& .MuiButton-startIcon": {
+                      display: { xs: "none", sm: "inherit" },
+                    },
+                  }}
+                >
+                  Jira連携
+                </Button>
+              )}
 
               <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
                 {session.user?.image ? (
