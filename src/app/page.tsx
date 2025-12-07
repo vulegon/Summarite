@@ -1,8 +1,7 @@
 "use client";
 
 import { useSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import {
   Box,
   Container,
@@ -24,6 +23,8 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import LoginIcon from "@mui/icons-material/Login";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import Link from "next/link";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import GroupsIcon from "@mui/icons-material/Groups";
 import SpeedIcon from "@mui/icons-material/Speed";
@@ -37,18 +38,11 @@ const emptySubscribe = () => () => {};
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false
   );
-
-  useEffect(() => {
-    if (session) {
-      router.push("/dashboard");
-    }
-  }, [session, router]);
 
   if (!mounted || status === "loading") {
     return (
@@ -129,30 +123,54 @@ export default function Home() {
               <br />
               週次・月次のメトリクスをAIが分析・要約するダッシュボードです。
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<LoginIcon />}
-              onClick={() => signIn()}
-              sx={{
-                bgcolor: "white",
-                color: "#1a1a2e",
-                "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                px: 5,
-                py: 1.5,
-                fontSize: "1.1rem",
-                fontWeight: 600,
-                borderRadius: 2,
-              }}
-            >
-              ログイン
-            </Button>
-            <Typography
-              variant="body2"
-              sx={{ mt: 2, color: "rgba(255,255,255,0.6)" }}
-            >
-              無料で始められます
-            </Typography>
+            {session ? (
+              <Button
+                component={Link}
+                href="/dashboard"
+                variant="contained"
+                size="large"
+                startIcon={<DashboardIcon />}
+                sx={{
+                  bgcolor: "white",
+                  color: "#1a1a2e",
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                  px: 5,
+                  py: 1.5,
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  borderRadius: 2,
+                }}
+              >
+                ダッシュボードへ
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<LoginIcon />}
+                  onClick={() => signIn()}
+                  sx={{
+                    bgcolor: "white",
+                    color: "#1a1a2e",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                    px: 5,
+                    py: 1.5,
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                  }}
+                >
+                  ログイン
+                </Button>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 2, color: "rgba(255,255,255,0.6)" }}
+                >
+                  無料で始められます
+                </Typography>
+              </>
+            )}
           </Box>
         </Container>
       </Box>
@@ -570,30 +588,62 @@ export default function Home() {
             >
               今すぐ始めましょう
             </Typography>
-            <Typography
-              variant="body1"
-              sx={{ color: "rgba(255,255,255,0.8)", mb: 4 }}
-            >
-              GitHubアカウントがあれば、すぐに利用開始できます。
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<LoginIcon />}
-              onClick={() => signIn()}
-              sx={{
-                bgcolor: "white",
-                color: "#1a1a2e",
-                "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                px: 5,
-                py: 1.5,
-                fontSize: "1.1rem",
-                fontWeight: 600,
-                borderRadius: 2,
-              }}
-            >
-              ログイン
-            </Button>
+            {session ? (
+              <>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "rgba(255,255,255,0.8)", mb: 4 }}
+                >
+                  ダッシュボードで活動を確認しましょう。
+                </Typography>
+                <Button
+                  component={Link}
+                  href="/dashboard"
+                  variant="contained"
+                  size="large"
+                  startIcon={<DashboardIcon />}
+                  sx={{
+                    bgcolor: "white",
+                    color: "#1a1a2e",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                    px: 5,
+                    py: 1.5,
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                  }}
+                >
+                  ダッシュボードへ
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "rgba(255,255,255,0.8)", mb: 4 }}
+                >
+                  GitHubアカウントがあれば、すぐに利用開始できます。
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<LoginIcon />}
+                  onClick={() => signIn()}
+                  sx={{
+                    bgcolor: "white",
+                    color: "#1a1a2e",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                    px: 5,
+                    py: 1.5,
+                    fontSize: "1.1rem",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                  }}
+                >
+                  ログイン
+                </Button>
+              </>
+            )}
           </Box>
         </Container>
       </Box>

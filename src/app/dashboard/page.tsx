@@ -67,7 +67,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/");
+      router.push("/auth/signin");
     }
   }, [status, router]);
 
