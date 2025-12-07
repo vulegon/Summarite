@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
-import { SummaryResponse } from "@/types";
+import { GithubMetrics, JiraMetrics, AIProvider } from "@/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import Image from "next/image";
@@ -24,7 +24,22 @@ import {
   Chip,
   Tabs,
   Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  SelectChangeEvent,
 } from "@mui/material";
+
+interface MetricsData {
+  github: GithubMetrics;
+  jira: JiraMetrics;
+  periodStart: string;
+  periodEnd: string;
+  periodType: "weekly" | "monthly";
+  hasSummary: boolean;
+  summary?: string;
+}
 import GitHubIcon from "@mui/icons-material/GitHub";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -38,6 +53,9 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import WarningIcon from "@mui/icons-material/Warning";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import CommitIcon from "@mui/icons-material/Commit";
 import { SummariteLogo } from "@/components/icons/SummariteLogo";
 
 const emptySubscribe = () => () => {};
@@ -46,10 +64,13 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
-  const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [metrics, setMetrics] = useState<MetricsData | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [aiProvider, setAiProvider] = useState<AIProvider>("gemini");
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -58,27 +79,67 @@ export default function Dashboard() {
 
   const periodType = activeTab === 0 ? "weekly" : "monthly";
 
-  const fetchSummary = useCallback(async () => {
+  const fetchMetrics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const endpoint = periodType === "weekly"
-        ? "/api/summary/weekly"
-        : "/api/summary/monthly";
+        ? "/api/metrics/weekly"
+        : "/api/metrics/monthly";
       const response = await fetch(endpoint);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch summary");
+        throw new Error("Failed to fetch metrics");
       }
 
-      const data = await response.json();
-      setSummary(data);
+      const data: MetricsData = await response.json();
+      setMetrics(data);
+      if (data.hasSummary && data.summary) {
+        setSummary(data.summary);
+      } else {
+        setSummary(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
   }, [periodType]);
+
+  const generateSummary = async () => {
+    if (!metrics) return;
+
+    setSummaryLoading(true);
+    try {
+      const response = await fetch("/api/generate-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          github: metrics.github,
+          jira: metrics.jira,
+          periodType: metrics.periodType,
+          periodStart: metrics.periodStart,
+          periodEnd: metrics.periodEnd,
+          provider: aiProvider,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate summary");
+      }
+
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const handleProviderChange = (event: SelectChangeEvent) => {
+    setAiProvider(event.target.value as AIProvider);
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -88,9 +149,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (session) {
-      fetchSummary();
+      fetchMetrics();
     }
-  }, [session, fetchSummary]);
+  }, [session, fetchMetrics]);
 
   if (!mounted || status === "loading") {
     return (
@@ -123,6 +184,12 @@ export default function Dashboard() {
     return `${format(startDate, "M月d日", { locale: ja })} 〜 ${format(endDate, "M月d日", { locale: ja })}`;
   };
 
+  const aiProviders = [
+    { value: "gemini", label: "Gemini (無料)", description: "Google AI" },
+    { value: "anthropic", label: "Claude", description: "Anthropic" },
+    { value: "openai", label: "GPT-4", description: "OpenAI" },
+  ];
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
@@ -140,19 +207,25 @@ export default function Dashboard() {
     signOut();
   };
 
-  const githubMetrics = [
-    { label: "作成PR", value: summary?.github.prsOpened ?? 0, icon: TrendingUpIcon, color: "#3b82f6" },
-    { label: "マージPR", value: summary?.github.prsMerged ?? 0, icon: MergeIcon, color: "#22c55e" },
-    { label: "レビュー", value: summary?.github.reviews ?? 0, icon: RateReviewIcon, color: "#a855f7" },
-    { label: "作成Issue", value: summary?.github.issuesOpened ?? 0, icon: BugReportIcon, color: "#f97316" },
-    { label: "完了Issue", value: summary?.github.issuesClosed ?? 0, icon: CheckCircleIcon, color: "#06b6d4" },
+  const githubMetricsDisplay = [
+    { label: "作成PR", value: metrics?.github.prsOpened ?? 0, icon: TrendingUpIcon, color: "#3b82f6" },
+    { label: "マージPR", value: metrics?.github.prsMerged ?? 0, icon: MergeIcon, color: "#22c55e" },
+    { label: "レビュー", value: metrics?.github.reviews ?? 0, icon: RateReviewIcon, color: "#a855f7" },
+    { label: "コミット", value: metrics?.github.commits ?? 0, icon: CommitIcon, color: "#8b5cf6" },
+    { label: "作成Issue", value: metrics?.github.issuesOpened ?? 0, icon: BugReportIcon, color: "#f97316" },
+    { label: "完了Issue", value: metrics?.github.issuesClosed ?? 0, icon: CheckCircleIcon, color: "#06b6d4" },
   ];
 
-  const jiraMetrics = [
-    { label: "作成", value: summary?.jira.created ?? 0, icon: TrendingUpIcon, color: "#0052CC" },
-    { label: "完了", value: summary?.jira.done ?? 0, icon: CheckCircleIcon, color: "#22c55e" },
-    { label: "進行中", value: summary?.jira.inProgress ?? 0, icon: HourglassEmptyIcon, color: "#06b6d4" },
-    { label: "停滞", value: summary?.jira.stalled ?? 0, icon: WarningIcon, color: "#ef4444" },
+  const codeChanges = {
+    additions: metrics?.github.additions ?? 0,
+    deletions: metrics?.github.deletions ?? 0,
+  };
+
+  const jiraMetricsDisplay = [
+    { label: "作成", value: metrics?.jira.created ?? 0, icon: TrendingUpIcon, color: "#0052CC" },
+    { label: "完了", value: metrics?.jira.done ?? 0, icon: CheckCircleIcon, color: "#22c55e" },
+    { label: "進行中", value: metrics?.jira.inProgress ?? 0, icon: HourglassEmptyIcon, color: "#06b6d4" },
+    { label: "停滞", value: metrics?.jira.stalled ?? 0, icon: WarningIcon, color: "#ef4444" },
   ];
 
   return (
@@ -351,10 +424,10 @@ export default function Dashboard() {
             >
               ダッシュボード
             </Typography>
-            {summary && (
+            {metrics && (
               <Chip
                 icon={<CalendarTodayIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                label={formatPeriod(summary.periodStart, summary.periodEnd)}
+                label={formatPeriod(metrics.periodStart, metrics.periodEnd)}
                 size="small"
                 sx={{
                   bgcolor: "rgba(102, 126, 234, 0.1)",
@@ -415,7 +488,7 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {!loading && summary && (
+        {!loading && metrics && (
           <Grid container spacing={{ xs: 2, sm: 3 }}>
             {/* GitHub Card */}
             <Grid size={{ xs: 12, md: 6 }}>
@@ -461,12 +534,121 @@ export default function Dashboard() {
                 </Box>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                   <Grid container spacing={{ xs: 1, sm: 2 }}>
-                    {githubMetrics.map((metric) => (
-                      <Grid size={{ xs: 6 }} key={metric.label}>
+                    {githubMetricsDisplay.map((metric) => (
+                      <Grid size={{ xs: 6, sm: 4 }} key={metric.label}>
                         <MetricCard {...metric} />
                       </Grid>
                     ))}
                   </Grid>
+
+                  {/* Code Changes Section */}
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: { xs: 1.5, sm: 2 },
+                      borderRadius: 2,
+                      background: "linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%)",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: "rgba(0,0,0,0.6)",
+                        mb: 1.5,
+                        fontWeight: 600,
+                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                      }}
+                    >
+                      コード変更量
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: { xs: 2, sm: 4 }, flexWrap: "wrap" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 1,
+                            bgcolor: "rgba(34, 197, 94, 0.15)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <AddIcon sx={{ fontSize: 16, color: "#22c55e" }} />
+                        </Box>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              color: "#22c55e",
+                              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                              lineHeight: 1,
+                            }}
+                          >
+                            +{codeChanges.additions.toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
+                          >
+                            追加行
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 1,
+                            bgcolor: "rgba(239, 68, 68, 0.15)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <RemoveIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                        </Box>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              color: "#ef4444",
+                              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                              lineHeight: 1,
+                            }}
+                          >
+                            -{codeChanges.deletions.toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
+                          >
+                            削除行
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: "auto" }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            color: codeChanges.additions - codeChanges.deletions >= 0 ? "#22c55e" : "#ef4444",
+                            fontSize: { xs: "0.9rem", sm: "1rem" },
+                          }}
+                        >
+                          {codeChanges.additions - codeChanges.deletions >= 0 ? "+" : ""}
+                          {(codeChanges.additions - codeChanges.deletions).toLocaleString()} 行
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "rgba(0,0,0,0.4)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
+                        >
+                          純増減
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -515,8 +697,8 @@ export default function Dashboard() {
                 </Box>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                   <Grid container spacing={{ xs: 1, sm: 2 }}>
-                    {jiraMetrics.map((metric) => (
-                      <Grid size={{ xs: 6 }} key={metric.label}>
+                    {jiraMetricsDisplay.map((metric) => (
+                      <Grid size={{ xs: 6, sm: 6 }} key={metric.label}>
                         <MetricCard {...metric} />
                       </Grid>
                     ))}
@@ -551,44 +733,104 @@ export default function Dashboard() {
                   sx={{
                     p: { xs: 2, sm: 2.5 },
                     display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    justifyContent: "space-between",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: 2,
                     borderBottom: "1px solid rgba(0,0,0,0.06)",
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: { xs: 32, sm: 40 },
-                      height: { xs: 32, sm: 40 },
-                      borderRadius: 2,
-                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <AutoAwesomeIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: { xs: 32, sm: 40 },
+                        height: { xs: 32, sm: 40 },
+                        borderRadius: 2,
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <AutoAwesomeIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
+                        AI要約
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.75rem" } }}>
+                        AIがメトリクスを分析して要約を生成します
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
-                      AI要約
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.75rem" } }}>
-                      Powered by AI
-                    </Typography>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: { xs: "100%", sm: "auto" } }}>
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <InputLabel id="ai-provider-label">AIモデル</InputLabel>
+                      <Select
+                        labelId="ai-provider-label"
+                        value={aiProvider}
+                        label="AIモデル"
+                        onChange={handleProviderChange}
+                        sx={{
+                          bgcolor: "rgba(0,0,0,0.02)",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "rgba(0,0,0,0.1)",
+                          },
+                        }}
+                      >
+                        {aiProviders.map((p) => (
+                          <MenuItem key={p.value} value={p.value}>
+                            {p.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Button
+                      variant="contained"
+                      onClick={generateSummary}
+                      disabled={summaryLoading}
+                      startIcon={summaryLoading ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}
+                      sx={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        textTransform: "none",
+                        fontWeight: 600,
+                        px: 3,
+                        "&:hover": {
+                          background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
+                        },
+                      }}
+                    >
+                      {summaryLoading ? "生成中..." : summary ? "再生成" : "要約を生成"}
+                    </Button>
                   </Box>
                 </Box>
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                  <Typography
-                    sx={{
-                      color: "rgba(0,0,0,0.8)",
-                      whiteSpace: "pre-wrap",
-                      lineHeight: { xs: 1.8, sm: 2 },
-                      fontSize: { xs: "0.875rem", sm: "1rem" },
-                    }}
-                  >
-                    {summary.summary}
-                  </Typography>
+                  {summary ? (
+                    <Typography
+                      sx={{
+                        color: "rgba(0,0,0,0.8)",
+                        whiteSpace: "pre-wrap",
+                        lineHeight: { xs: 1.8, sm: 2 },
+                        fontSize: { xs: "0.875rem", sm: "1rem" },
+                      }}
+                    >
+                      {summary}
+                    </Typography>
+                  ) : (
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 4,
+                        color: "rgba(0,0,0,0.4)",
+                      }}
+                    >
+                      <AutoAwesomeIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
+                      <Typography>
+                        上のボタンをクリックしてAI要約を生成してください
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>

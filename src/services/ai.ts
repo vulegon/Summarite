@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GithubMetrics, JiraMetrics, AIProvider } from "@/types";
 
 function buildPrompt(
@@ -17,6 +18,9 @@ function buildPrompt(
 - レビュー数: ${github.reviews}
 - 作成したIssue数: ${github.issuesOpened}
 - クローズしたIssue数: ${github.issuesClosed}
+- コミット数: ${github.commits}
+- 追加行数: ${github.additions.toLocaleString()}行
+- 削除行数: ${github.deletions.toLocaleString()}行
 
 ## Jira メトリクス
 - 作成したチケット数: ${jira.created}
@@ -36,15 +40,18 @@ function buildPrompt(
 export async function generateSummary(
   github: GithubMetrics,
   jira: JiraMetrics,
-  periodType: "weekly" | "monthly"
+  periodType: "weekly" | "monthly",
+  provider?: AIProvider
 ): Promise<{ summary: string; model: string }> {
-  const provider = (process.env.AI_PROVIDER || "anthropic") as AIProvider;
+  const selectedProvider = provider || (process.env.AI_PROVIDER as AIProvider) || "gemini";
   const prompt = buildPrompt(github, jira, periodType);
 
-  if (provider === "openai") {
+  if (selectedProvider === "openai") {
     return generateWithOpenAI(prompt);
-  } else {
+  } else if (selectedProvider === "anthropic") {
     return generateWithAnthropic(prompt);
+  } else {
+    return generateWithGemini(prompt);
   }
 }
 
@@ -105,5 +112,23 @@ async function generateWithAnthropic(
         ? textContent.text
         : "要約を生成できませんでした",
     model: "claude-3-5-sonnet",
+  };
+}
+
+async function generateWithGemini(
+  prompt: string
+): Promise<{ summary: string; model: string }> {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const systemPrompt =
+    "あなたは開発チームのパフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。";
+
+  const result = await model.generateContent(`${systemPrompt}\n\n${prompt}`);
+  const response = result.response;
+
+  return {
+    summary: response.text() || "要約を生成できませんでした",
+    model: "gemini-1.5-flash",
   };
 }

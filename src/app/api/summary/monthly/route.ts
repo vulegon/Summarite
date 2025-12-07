@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
           reviews: existingMetrics.reviews,
           issuesOpened: existingMetrics.issuesOpened,
           issuesClosed: existingMetrics.issuesClosed,
+          additions: existingMetrics.additions,
+          deletions: existingMetrics.deletions,
+          commits: existingMetrics.commits,
         },
         jira: existingJiraMetrics
           ? {
@@ -79,6 +82,9 @@ export async function GET(request: NextRequest) {
       reviews: 0,
       issuesOpened: 0,
       issuesClosed: 0,
+      additions: 0,
+      deletions: 0,
+      commits: 0,
     };
 
     let jiraMetrics: JiraMetrics = {

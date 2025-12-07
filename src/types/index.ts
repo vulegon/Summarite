@@ -4,6 +4,9 @@ export interface GithubMetrics {
   reviews: number;
   issuesOpened: number;
   issuesClosed: number;
+  additions: number;
+  deletions: number;
+  commits: number;
 }
 
 export interface JiraMetrics {
@@ -22,7 +25,7 @@ export interface SummaryResponse {
   periodType: "weekly" | "monthly";
 }
 
-export type AIProvider = "openai" | "anthropic";
+export type AIProvider = "openai" | "anthropic" | "gemini";
 
 export interface Period {
   start: Date;
