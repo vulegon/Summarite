@@ -185,9 +185,7 @@ export default function Dashboard() {
   };
 
   const aiProviders = [
-    { value: "gemini", label: "Gemini (無料)", description: "Google AI" },
-    { value: "anthropic", label: "Claude", description: "Anthropic" },
-    { value: "openai", label: "GPT-4", description: "OpenAI" },
+    { value: "gemini", label: "Gemini", description: "Google AI" },
   ];
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
