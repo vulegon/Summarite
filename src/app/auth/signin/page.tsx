@@ -14,8 +14,8 @@ import {
   CircularProgress,
 } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { SummariteLogo } from "@/components/icons/SummariteLogo";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -48,14 +48,14 @@ function SignInContent() {
         }}
       />
 
-      <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
+      <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3 } }}>
         <Card
           sx={{
             maxWidth: 420,
             width: "100%",
             mx: "auto",
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-            borderRadius: 3,
+            borderRadius: { xs: 2, sm: 3 },
             overflow: "hidden",
           }}
         >
@@ -63,48 +63,45 @@ function SignInContent() {
           <Box
             sx={{
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              py: 4,
-              px: 3,
+              py: { xs: 3, sm: 4 },
+              px: { xs: 2, sm: 3 },
               textAlign: "center",
             }}
           >
             <Box
               sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                bgcolor: "rgba(255,255,255,0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                mx: "auto",
+                gap: { xs: 1, sm: 1.5 },
                 mb: 2,
               }}
             >
-              <AutoAwesomeIcon sx={{ fontSize: 32, color: "white" }} />
+              <SummariteLogo size={40} />
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{ fontWeight: 700, color: "white", fontSize: { xs: "1.5rem", sm: "2rem" } }}
+              >
+                Summarite
+              </Typography>
             </Box>
             <Typography
-              variant="h4"
-              component="h1"
-              sx={{ fontWeight: 700, color: "white", mb: 1 }}
-            >
-              Summarite
-            </Typography>
-            <Typography
               variant="body2"
-              sx={{ color: "rgba(255,255,255,0.8)" }}
+              sx={{ color: "rgba(255,255,255,0.8)", fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
             >
               開発チームの成果をAIが自動で要約
             </Typography>
           </Box>
 
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
             <Typography
               variant="body1"
               sx={{
                 color: "grey.600",
-                mb: 4,
+                mb: { xs: 3, sm: 4 },
                 textAlign: "center",
+                fontSize: { xs: "0.875rem", sm: "1rem" },
               }}
             >
               アカウントでログインして
@@ -121,19 +118,19 @@ function SignInContent() {
               sx={{
                 bgcolor: "#24292e",
                 "&:hover": { bgcolor: "#1b1f23" },
-                py: 1.5,
+                py: { xs: 1.25, sm: 1.5 },
                 mb: 2,
                 borderRadius: 2,
                 textTransform: "none",
-                fontSize: "1rem",
+                fontSize: { xs: "0.875rem", sm: "1rem" },
                 fontWeight: 600,
               }}
             >
               GitHubでログイン
             </Button>
 
-            <Divider sx={{ my: 2.5 }}>
-              <Typography variant="body2" sx={{ color: "grey.400", px: 2 }}>
+            <Divider sx={{ my: { xs: 2, sm: 2.5 } }}>
+              <Typography variant="body2" sx={{ color: "grey.400", px: 2, fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
                 または
               </Typography>
             </Divider>
@@ -151,10 +148,10 @@ function SignInContent() {
                   borderColor: "grey.400",
                   bgcolor: "grey.50",
                 },
-                py: 1.5,
+                py: { xs: 1.25, sm: 1.5 },
                 borderRadius: 2,
                 textTransform: "none",
-                fontSize: "1rem",
+                fontSize: { xs: "0.875rem", sm: "1rem" },
                 fontWeight: 600,
               }}
             >
@@ -167,7 +164,8 @@ function SignInContent() {
                 display: "block",
                 textAlign: "center",
                 color: "grey.500",
-                mt: 4,
+                mt: { xs: 3, sm: 4 },
+                fontSize: { xs: "0.65rem", sm: "0.75rem" },
               }}
             >
               ログインすることで、利用規約に同意したものとみなされます
@@ -176,14 +174,14 @@ function SignInContent() {
         </Card>
 
         {/* Back to home link */}
-        <Box sx={{ textAlign: "center", mt: 4 }}>
+        <Box sx={{ textAlign: "center", mt: { xs: 3, sm: 4 } }}>
           <Typography
             component="a"
             href="/"
             sx={{
               color: "rgba(255,255,255,0.7)",
               textDecoration: "none",
-              fontSize: "0.875rem",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
               "&:hover": {
                 color: "white",
                 textDecoration: "underline",

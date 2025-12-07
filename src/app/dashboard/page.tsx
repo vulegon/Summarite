@@ -178,7 +178,7 @@ export default function Dashboard() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              py: 2,
+              py: { xs: 1.5, sm: 2 },
             }}
           >
             <Box
@@ -187,23 +187,24 @@ export default function Dashboard() {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
+                gap: { xs: 1, sm: 1.5 },
                 textDecoration: "none",
               }}
             >
-              <SummariteLogo size={36} />
+              <SummariteLogo size={32} />
               <Typography
                 sx={{
                   fontWeight: 800,
-                  fontSize: "1.5rem",
+                  fontSize: { xs: "1.2rem", sm: "1.5rem" },
                   color: "white",
+                  display: { xs: "none", sm: "block" },
                 }}
               >
                 Summarite
               </Typography>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
               <Button
                 variant="outlined"
                 size="small"
@@ -214,9 +215,14 @@ export default function Dashboard() {
                   color: "rgba(255,255,255,0.9)",
                   borderRadius: 2,
                   textTransform: "none",
+                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  px: { xs: 1.5, sm: 2 },
                   "&:hover": {
                     borderColor: "rgba(255,255,255,0.5)",
                     bgcolor: "rgba(255,255,255,0.1)",
+                  },
+                  "& .MuiButton-startIcon": {
+                    display: { xs: "none", sm: "inherit" },
                   },
                 }}
               >
@@ -322,29 +328,40 @@ export default function Dashboard() {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 } }}>
         {/* Title Section */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+        <Box sx={{ mb: { xs: 2, sm: 4 } }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              gap: { xs: 1, sm: 2 },
+              mb: 2,
+            }}
+          >
             <Typography
               variant="h3"
               sx={{
                 fontWeight: 800,
                 color: "#1a1a2e",
                 letterSpacing: "-0.02em",
+                fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3rem" },
               }}
             >
               ダッシュボード
             </Typography>
             {summary && (
               <Chip
-                icon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
+                icon={<CalendarTodayIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                 label={formatPeriod(summary.periodStart, summary.periodEnd)}
+                size="small"
                 sx={{
                   bgcolor: "rgba(102, 126, 234, 0.1)",
                   color: "#667eea",
                   border: "1px solid rgba(102, 126, 234, 0.2)",
                   "& .MuiChip-icon": { color: "#667eea" },
+                  fontSize: { xs: "0.7rem", sm: "0.8rem" },
                 }}
               />
             )}
@@ -363,8 +380,9 @@ export default function Dashboard() {
                 color: "rgba(0,0,0,0.4)",
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "1rem",
-                minWidth: 100,
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+                minWidth: { xs: 60, sm: 100 },
+                px: { xs: 1.5, sm: 2 },
                 "&.Mui-selected": {
                   color: "#1a1a2e",
                 },
@@ -398,26 +416,26 @@ export default function Dashboard() {
         )}
 
         {!loading && summary && (
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             {/* GitHub Card */}
-            <Grid size={{ xs: 12, lg: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card
                 sx={{
                   bgcolor: "white",
                   border: "1px solid rgba(0,0,0,0.08)",
-                  borderRadius: 4,
+                  borderRadius: { xs: 2, sm: 4 },
                   overflow: "hidden",
                   transition: "transform 0.3s, box-shadow 0.3s",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
                   "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                    transform: { sm: "translateY(-4px)" },
+                    boxShadow: { sm: "0 20px 40px rgba(0,0,0,0.1)" },
                   },
                 }}
               >
                 <Box
                   sx={{
-                    p: 2.5,
+                    p: { xs: 2, sm: 2.5 },
                     display: "flex",
                     alignItems: "center",
                     gap: 1.5,
@@ -426,8 +444,8 @@ export default function Dashboard() {
                 >
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
+                      width: { xs: 32, sm: 40 },
+                      height: { xs: 32, sm: 40 },
                       borderRadius: 2,
                       bgcolor: "#24292e",
                       display: "flex",
@@ -435,14 +453,14 @@ export default function Dashboard() {
                       justifyContent: "center",
                     }}
                   >
-                    <GitHubIcon sx={{ color: "white" }} />
+                    <GitHubIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                     GitHub
                   </Typography>
                 </Box>
-                <CardContent sx={{ p: 2.5 }}>
-                  <Grid container spacing={2}>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                  <Grid container spacing={{ xs: 1, sm: 2 }}>
                     {githubMetrics.map((metric) => (
                       <Grid size={{ xs: 6 }} key={metric.label}>
                         <MetricCard {...metric} />
@@ -454,24 +472,24 @@ export default function Dashboard() {
             </Grid>
 
             {/* Jira Card */}
-            <Grid size={{ xs: 12, lg: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Card
                 sx={{
                   bgcolor: "white",
                   border: "1px solid rgba(0,0,0,0.08)",
-                  borderRadius: 4,
+                  borderRadius: { xs: 2, sm: 4 },
                   overflow: "hidden",
                   transition: "transform 0.3s, box-shadow 0.3s",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
                   "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                    transform: { sm: "translateY(-4px)" },
+                    boxShadow: { sm: "0 20px 40px rgba(0,0,0,0.1)" },
                   },
                 }}
               >
                 <Box
                   sx={{
-                    p: 2.5,
+                    p: { xs: 2, sm: 2.5 },
                     display: "flex",
                     alignItems: "center",
                     gap: 1.5,
@@ -480,8 +498,8 @@ export default function Dashboard() {
                 >
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
+                      width: { xs: 32, sm: 40 },
+                      height: { xs: 32, sm: 40 },
                       borderRadius: 2,
                       bgcolor: "#0052CC",
                       display: "flex",
@@ -489,14 +507,14 @@ export default function Dashboard() {
                       justifyContent: "center",
                     }}
                   >
-                    <AssignmentIcon sx={{ color: "white" }} />
+                    <AssignmentIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                     Jira
                   </Typography>
                 </Box>
-                <CardContent sx={{ p: 2.5 }}>
-                  <Grid container spacing={2}>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                  <Grid container spacing={{ xs: 1, sm: 2 }}>
                     {jiraMetrics.map((metric) => (
                       <Grid size={{ xs: 6 }} key={metric.label}>
                         <MetricCard {...metric} />
@@ -513,7 +531,7 @@ export default function Dashboard() {
                 sx={{
                   bgcolor: "white",
                   border: "1px solid rgba(0,0,0,0.08)",
-                  borderRadius: 4,
+                  borderRadius: { xs: 2, sm: 4 },
                   overflow: "hidden",
                   position: "relative",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
@@ -531,7 +549,7 @@ export default function Dashboard() {
                 />
                 <Box
                   sx={{
-                    p: 2.5,
+                    p: { xs: 2, sm: 2.5 },
                     display: "flex",
                     alignItems: "center",
                     gap: 1.5,
@@ -540,8 +558,8 @@ export default function Dashboard() {
                 >
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
+                      width: { xs: 32, sm: 40 },
+                      height: { xs: 32, sm: 40 },
                       borderRadius: 2,
                       background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                       display: "flex",
@@ -549,24 +567,24 @@ export default function Dashboard() {
                       justifyContent: "center",
                     }}
                   >
-                    <AutoAwesomeIcon sx={{ color: "white" }} />
+                    <AutoAwesomeIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
                   </Box>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                       AI要約
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.5)" }}>
+                    <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.75rem" } }}>
                       Powered by AI
                     </Typography>
                   </Box>
                 </Box>
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   <Typography
                     sx={{
                       color: "rgba(0,0,0,0.8)",
                       whiteSpace: "pre-wrap",
-                      lineHeight: 2,
-                      fontSize: "1rem",
+                      lineHeight: { xs: 1.8, sm: 2 },
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
                     }}
                   >
                     {summary.summary}
@@ -595,8 +613,8 @@ function MetricCard({
   return (
     <Box
       sx={{
-        p: 2,
-        borderRadius: 3,
+        p: { xs: 1.5, sm: 2 },
+        borderRadius: { xs: 2, sm: 3 },
         bgcolor: "rgba(0,0,0,0.02)",
         border: "1px solid rgba(0,0,0,0.06)",
         transition: "all 0.2s",
@@ -606,9 +624,9 @@ function MetricCard({
         },
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-        <Icon sx={{ fontSize: 18, color: color }} />
-        <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.6)" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+        <Icon sx={{ fontSize: { xs: 14, sm: 18 }, color: color }} />
+        <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.6)", fontSize: { xs: "0.7rem", sm: "0.875rem" } }}>
           {label}
         </Typography>
       </Box>
@@ -618,6 +636,7 @@ function MetricCard({
           fontWeight: 800,
           color: color,
           letterSpacing: "-0.02em",
+          fontSize: { xs: "1.5rem", sm: "2rem" },
         }}
       >
         {value}

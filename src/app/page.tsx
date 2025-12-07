@@ -86,18 +86,38 @@ export default function Home() {
             backgroundSize: "50px 50px",
           }}
         />
-        <Container maxWidth="lg" sx={{ position: "relative" }}>
+        <Container maxWidth="lg" sx={{ position: "relative", px: { xs: 2, sm: 3 } }}>
           <Box sx={{ textAlign: "center", maxWidth: 800, mx: "auto" }}>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-              <SummariteLogo size={80} />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: { xs: 1.5, sm: 2 },
+                mb: { xs: 2, sm: 3 },
+              }}
+            >
+              <SummariteLogo size={48} />
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: "1.75rem", sm: "2.5rem" },
+                  color: "white",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Summarite
+              </Typography>
             </Box>
             <Chip
               label="GitHub & Jira 連携"
+              size="small"
               sx={{
                 bgcolor: "rgba(255,255,255,0.15)",
                 color: "white",
-                mb: 3,
+                mb: { xs: 2, sm: 3 },
                 fontWeight: 500,
+                fontSize: { xs: "0.75rem", sm: "0.8125rem" },
               }}
             />
             <Typography
@@ -105,8 +125,8 @@ export default function Home() {
               component="h1"
               sx={{
                 fontWeight: 800,
-                mb: 3,
-                fontSize: { xs: "2.5rem", md: "3.5rem" },
+                mb: { xs: 2, sm: 3 },
+                fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3.5rem" },
                 lineHeight: 1.2,
               }}
             >
@@ -118,13 +138,14 @@ export default function Home() {
               variant="h6"
               sx={{
                 color: "rgba(255,255,255,0.8)",
-                mb: 4,
+                mb: { xs: 3, sm: 4 },
                 fontWeight: 400,
                 lineHeight: 1.8,
+                fontSize: { xs: "0.875rem", sm: "1rem", md: "1.25rem" },
               }}
             >
               Summariteは、GitHubとJiraのデータを統合し、
-              <br />
+              <Box component="br" sx={{ display: { xs: "none", sm: "block" } }} />
               週次・月次のメトリクスをAIが分析・要約するダッシュボードです。
             </Typography>
             {session ? (
@@ -138,9 +159,9 @@ export default function Home() {
                   bgcolor: "white",
                   color: "#1a1a2e",
                   "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                  px: 5,
-                  py: 1.5,
-                  fontSize: "1.1rem",
+                  px: { xs: 3, sm: 5 },
+                  py: { xs: 1.25, sm: 1.5 },
+                  fontSize: { xs: "0.9rem", sm: "1.1rem" },
                   fontWeight: 600,
                   borderRadius: 2,
                 }}
@@ -158,9 +179,9 @@ export default function Home() {
                     bgcolor: "white",
                     color: "#1a1a2e",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                    px: 5,
-                    py: 1.5,
-                    fontSize: "1.1rem",
+                    px: { xs: 3, sm: 5 },
+                    py: { xs: 1.25, sm: 1.5 },
+                    fontSize: { xs: "0.9rem", sm: "1.1rem" },
                     fontWeight: 600,
                     borderRadius: 2,
                   }}
@@ -169,7 +190,7 @@ export default function Home() {
                 </Button>
                 <Typography
                   variant="body2"
-                  sx={{ mt: 2, color: "rgba(255,255,255,0.6)" }}
+                  sx={{ mt: 2, color: "rgba(255,255,255,0.6)", fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
                 >
                   無料で始められます
                 </Typography>
@@ -180,21 +201,21 @@ export default function Home() {
       </Box>
 
       {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
-        <Box sx={{ textAlign: "center", mb: 6 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 5, sm: 8, md: 10 }, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ textAlign: "center", mb: { xs: 4, sm: 6 } }}>
           <Typography
             variant="h4"
             component="h2"
-            sx={{ fontWeight: 700, color: "grey.900", mb: 2 }}
+            sx={{ fontWeight: 700, color: "grey.900", mb: 2, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}
           >
             主な機能
           </Typography>
-          <Typography variant="body1" sx={{ color: "grey.600" }}>
+          <Typography variant="body1" sx={{ color: "grey.600", fontSize: { xs: "0.875rem", sm: "1rem" } }}>
             開発チームの活動を可視化し、振り返りを効率化
           </Typography>
         </Box>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 4 }}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
@@ -209,21 +230,21 @@ export default function Home() {
                 },
               }}
             >
-              <CardContent sx={{ p: 4 }}>
+              <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
                 <Avatar
                   sx={{
-                    width: 64,
-                    height: 64,
-                    mb: 3,
+                    width: { xs: 48, sm: 64 },
+                    height: { xs: 48, sm: 64 },
+                    mb: { xs: 2, sm: 3 },
                     backgroundColor: "#dbeafe",
                   }}
                 >
-                  <IntegrationInstructionsIcon sx={{ color: "#2563eb", fontSize: 32 }} />
+                  <IntegrationInstructionsIcon sx={{ color: "#2563eb", fontSize: { xs: 24, sm: 32 } }} />
                 </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                   GitHub連携
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                   OAuthでGitHubと連携し、以下のメトリクスを自動取得します。
                 </Typography>
                 <List dense>
@@ -273,21 +294,21 @@ export default function Home() {
                 },
               }}
             >
-              <CardContent sx={{ p: 4 }}>
+              <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
                 <Avatar
                   sx={{
-                    width: 64,
-                    height: 64,
-                    mb: 3,
+                    width: { xs: 48, sm: 64 },
+                    height: { xs: 48, sm: 64 },
+                    mb: { xs: 2, sm: 3 },
                     backgroundColor: "#e0e7ff",
                   }}
                 >
-                  <AssignmentIcon sx={{ color: "#4f46e5", fontSize: 32 }} />
+                  <AssignmentIcon sx={{ color: "#4f46e5", fontSize: { xs: 24, sm: 32 } }} />
                 </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                   Jira連携
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                   Jira Cloudと連携し、チケット状態を取得します。
                 </Typography>
                 <List dense>
@@ -337,21 +358,21 @@ export default function Home() {
                 },
               }}
             >
-              <CardContent sx={{ p: 4 }}>
+              <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
                 <Avatar
                   sx={{
-                    width: 64,
-                    height: 64,
-                    mb: 3,
+                    width: { xs: 48, sm: 64 },
+                    height: { xs: 48, sm: 64 },
+                    mb: { xs: 2, sm: 3 },
                     backgroundColor: "#f3e8ff",
                   }}
                 >
-                  <AutoAwesomeIcon sx={{ color: "#9333ea", fontSize: 32 }} />
+                  <AutoAwesomeIcon sx={{ color: "#9333ea", fontSize: { xs: 24, sm: 32 } }} />
                 </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                   AI要約
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                   OpenAIまたはClaude AIが活動データを分析・要約します。
                 </Typography>
                 <List dense>
@@ -390,20 +411,20 @@ export default function Home() {
       </Container>
 
       {/* Target Users Section */}
-      <Box sx={{ bgcolor: "white", py: { xs: 8, md: 10 } }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: "center", mb: 6 }}>
+      <Box sx={{ bgcolor: "white", py: { xs: 5, sm: 8, md: 10 } }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ textAlign: "center", mb: { xs: 4, sm: 6 } }}>
             <Typography
               variant="h4"
               component="h2"
-              sx={{ fontWeight: 700, color: "grey.900", mb: 2 }}
+              sx={{ fontWeight: 700, color: "grey.900", mb: 2, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}
             >
               こんな方におすすめ
             </Typography>
           </Box>
 
-          <Grid container spacing={4} justifyContent="center">
-            <Grid size={{ xs: 12, md: 5 }}>
+          <Grid container spacing={{ xs: 2, sm: 4 }} justifyContent="center">
+            <Grid size={{ xs: 12, sm: 6, md: 5 }}>
               <Card
                 sx={{
                   height: "100%",
@@ -412,21 +433,21 @@ export default function Home() {
                   borderColor: "grey.100",
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
                   <Avatar
                     sx={{
-                      width: 56,
-                      height: 56,
+                      width: { xs: 48, sm: 56 },
+                      height: { xs: 48, sm: 56 },
                       mb: 2,
                       backgroundColor: "#dcfce7",
                     }}
                   >
-                    <GroupsIcon sx={{ color: "#16a34a", fontSize: 28 }} />
+                    <GroupsIcon sx={{ color: "#16a34a", fontSize: { xs: 24, sm: 28 } }} />
                   </Avatar>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                     開発者 / PM
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                     チームや個人の活動量を把握したい方。
                     週次・月次の成果を数値で確認し、
                     1on1やパフォーマンスレビューに活用できます。
@@ -435,7 +456,7 @@ export default function Home() {
               </Card>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 5 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 5 }}>
               <Card
                 sx={{
                   height: "100%",
@@ -444,21 +465,21 @@ export default function Home() {
                   borderColor: "grey.100",
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
                   <Avatar
                     sx={{
-                      width: 56,
-                      height: 56,
+                      width: { xs: 48, sm: 56 },
+                      height: { xs: 48, sm: 56 },
                       mb: 2,
                       backgroundColor: "#fef3c7",
                     }}
                   >
-                    <SpeedIcon sx={{ color: "#d97706", fontSize: 28 }} />
+                    <SpeedIcon sx={{ color: "#d97706", fontSize: { xs: 24, sm: 28 } }} />
                   </Avatar>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                     スクラムチーム
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                     スプリント振り返りを効率化したい方。
                     レトロスペクティブの事前準備として、
                     AIが生成したサマリーを活用できます。
@@ -471,29 +492,29 @@ export default function Home() {
       </Box>
 
       {/* How it works */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 10 } }}>
-        <Box sx={{ textAlign: "center", mb: 6 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 5, sm: 8, md: 10 }, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ textAlign: "center", mb: { xs: 4, sm: 6 } }}>
           <Typography
             variant="h4"
             component="h2"
-            sx={{ fontWeight: 700, color: "grey.900", mb: 2 }}
+            sx={{ fontWeight: 700, color: "grey.900", mb: 2, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}
           >
             使い方
           </Typography>
         </Box>
 
-        <Grid container spacing={4} alignItems="center">
+        <Grid container spacing={{ xs: 3, sm: 4 }} alignItems="center">
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ textAlign: "center" }}>
               <Avatar
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: { xs: 60, sm: 80 },
+                  height: { xs: 60, sm: 80 },
                   mx: "auto",
                   mb: 2,
                   bgcolor: "#667eea",
                   color: "white",
-                  fontSize: "1.5rem",
+                  fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   fontWeight: 700,
                   boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
                 }}
@@ -502,11 +523,11 @@ export default function Home() {
               </Avatar>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 600, mb: 1, color: "grey.900" }}
+                sx={{ fontWeight: 600, mb: 1, color: "grey.900", fontSize: { xs: "1rem", sm: "1.25rem" } }}
               >
                 ログイン
               </Typography>
-              <Typography variant="body2" sx={{ color: "grey.600" }}>
+              <Typography variant="body2" sx={{ color: "grey.600", fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                 GitHubまたはGoogleアカウントでログインし、
                 サービスへのアクセスを許可します。
               </Typography>
@@ -517,13 +538,13 @@ export default function Home() {
             <Box sx={{ textAlign: "center" }}>
               <Avatar
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: { xs: 60, sm: 80 },
+                  height: { xs: 60, sm: 80 },
                   mx: "auto",
                   mb: 2,
                   bgcolor: "#667eea",
                   color: "white",
-                  fontSize: "1.5rem",
+                  fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   fontWeight: 700,
                   boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
                 }}
@@ -532,11 +553,11 @@ export default function Home() {
               </Avatar>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 600, mb: 1, color: "grey.900" }}
+                sx={{ fontWeight: 600, mb: 1, color: "grey.900", fontSize: { xs: "1rem", sm: "1.25rem" } }}
               >
                 Jiraを連携（任意）
               </Typography>
-              <Typography variant="body2" sx={{ color: "grey.600" }}>
+              <Typography variant="body2" sx={{ color: "grey.600", fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                 必要に応じてJira Cloudを連携し、
                 チケット情報も統合できます。
               </Typography>
@@ -547,13 +568,13 @@ export default function Home() {
             <Box sx={{ textAlign: "center" }}>
               <Avatar
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: { xs: 60, sm: 80 },
+                  height: { xs: 60, sm: 80 },
                   mx: "auto",
                   mb: 2,
                   bgcolor: "#667eea",
                   color: "white",
-                  fontSize: "1.5rem",
+                  fontSize: { xs: "1.25rem", sm: "1.5rem" },
                   fontWeight: 700,
                   boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
                 }}
@@ -562,11 +583,11 @@ export default function Home() {
               </Avatar>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 600, mb: 1, color: "grey.900" }}
+                sx={{ fontWeight: 600, mb: 1, color: "grey.900", fontSize: { xs: "1rem", sm: "1.25rem" } }}
               >
                 レポートを確認
               </Typography>
-              <Typography variant="body2" sx={{ color: "grey.600" }}>
+              <Typography variant="body2" sx={{ color: "grey.600", fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
                 ダッシュボードで週次・月次のメトリクスと
                 AI要約を確認できます。
               </Typography>
@@ -580,15 +601,15 @@ export default function Home() {
         sx={{
           bgcolor: "#1a1a2e",
           color: "white",
-          py: { xs: 8, md: 10 },
+          py: { xs: 5, sm: 8, md: 10 },
         }}
       >
-        <Container maxWidth="md">
+        <Container maxWidth="md" sx={{ px: { xs: 2, sm: 3 } }}>
           <Box sx={{ textAlign: "center" }}>
             <Typography
               variant="h4"
               component="h2"
-              sx={{ fontWeight: 700, mb: 2 }}
+              sx={{ fontWeight: 700, mb: 2, fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" } }}
             >
               今すぐ始めましょう
             </Typography>
@@ -596,7 +617,7 @@ export default function Home() {
               <>
                 <Typography
                   variant="body1"
-                  sx={{ color: "rgba(255,255,255,0.8)", mb: 4 }}
+                  sx={{ color: "rgba(255,255,255,0.8)", mb: { xs: 3, sm: 4 }, fontSize: { xs: "0.875rem", sm: "1rem" } }}
                 >
                   ダッシュボードで活動を確認しましょう。
                 </Typography>
@@ -610,9 +631,9 @@ export default function Home() {
                     bgcolor: "white",
                     color: "#1a1a2e",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                    px: 5,
-                    py: 1.5,
-                    fontSize: "1.1rem",
+                    px: { xs: 3, sm: 5 },
+                    py: { xs: 1.25, sm: 1.5 },
+                    fontSize: { xs: "0.9rem", sm: "1.1rem" },
                     fontWeight: 600,
                     borderRadius: 2,
                   }}
@@ -624,7 +645,7 @@ export default function Home() {
               <>
                 <Typography
                   variant="body1"
-                  sx={{ color: "rgba(255,255,255,0.8)", mb: 4 }}
+                  sx={{ color: "rgba(255,255,255,0.8)", mb: { xs: 3, sm: 4 }, fontSize: { xs: "0.875rem", sm: "1rem" } }}
                 >
                   GitHubアカウントがあれば、すぐに利用開始できます。
                 </Typography>
@@ -637,9 +658,9 @@ export default function Home() {
                     bgcolor: "white",
                     color: "#1a1a2e",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                    px: 5,
-                    py: 1.5,
-                    fontSize: "1.1rem",
+                    px: { xs: 3, sm: 5 },
+                    py: { xs: 1.25, sm: 1.5 },
+                    fontSize: { xs: "0.9rem", sm: "1.1rem" },
                     fontWeight: 600,
                     borderRadius: 2,
                   }}
@@ -653,22 +674,22 @@ export default function Home() {
       </Box>
 
       {/* Footer */}
-      <Box sx={{ bgcolor: "white", py: 4 }}>
-        <Container maxWidth="lg">
-          <Divider sx={{ mb: 4 }} />
+      <Box sx={{ bgcolor: "white", py: { xs: 3, sm: 4 } }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Divider sx={{ mb: { xs: 3, sm: 4 } }} />
           <Box
             sx={{
               display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
               justifyContent: "space-between",
               alignItems: "center",
-              flexWrap: "wrap",
-              gap: 2,
+              gap: { xs: 1, sm: 2 },
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
               Summarite
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", sm: "0.875rem" } }}>
               Next.js / TypeScript / Prisma / OpenAI / Claude
             </Typography>
           </Box>

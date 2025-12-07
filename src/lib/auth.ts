@@ -109,6 +109,24 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      // ログイン後はダッシュボードにリダイレクト
+      if (url.startsWith(baseUrl)) {
+        // callbackUrlが/auth/signinや/の場合はダッシュボードへ
+        if (url === baseUrl || url === `${baseUrl}/` || url.includes("/auth/signin")) {
+          return `${baseUrl}/dashboard`;
+        }
+        return url;
+      }
+      // 相対URLの場合
+      if (url.startsWith("/")) {
+        if (url === "/" || url.includes("/auth/signin")) {
+          return `${baseUrl}/dashboard`;
+        }
+        return `${baseUrl}${url}`;
+      }
+      return `${baseUrl}/dashboard`;
+    },
   },
   pages: {
     signIn: "/auth/signin",
