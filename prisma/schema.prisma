@@ -11,89 +11,95 @@ model User {
   email         String    @unique
   name          String?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   accounts      Account[]
   githubMetrics GithubMetric[]
   jiraMetrics   JiraMetric[]
   summaries     Summary[]
+
+  @@map("users")
 }
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @map("user_id")
   type              String
   provider          String
-  providerAccountId String
-  accessToken       String?
-  refreshToken      String?
-  expiresAt         Int?
-  tokenType         String?
+  providerAccountId String  @map("provider_account_id")
+  accessToken       String? @map("access_token")
+  refreshToken      String? @map("refresh_token")
+  expiresAt         Int?    @map("expires_at")
+  tokenType         String? @map("token_type")
   scope             String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+  @@map("accounts")
 }
 
 model GithubMetric {
   id           String   @id @default(cuid())
-  userId       String
-  periodStart  DateTime
-  periodEnd    DateTime
-  periodType   String
+  userId       String   @map("user_id")
+  periodStart  DateTime @map("period_start")
+  periodEnd    DateTime @map("period_end")
+  periodType   String   @map("period_type")
 
-  prsOpened    Int      @default(0)
-  prsMerged    Int      @default(0)
+  prsOpened    Int      @default(0) @map("prs_opened")
+  prsMerged    Int      @default(0) @map("prs_merged")
   reviews      Int      @default(0)
-  issuesOpened Int      @default(0)
-  issuesClosed Int      @default(0)
+  issuesOpened Int      @default(0) @map("issues_opened")
+  issuesClosed Int      @default(0) @map("issues_closed")
 
-  rawData      Json?
-  createdAt    DateTime @default(now())
+  rawData      Json?    @map("raw_data")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, periodStart, periodEnd, periodType])
   @@index([userId, periodType])
+  @@map("github_metrics")
 }
 
 model JiraMetric {
   id          String   @id @default(cuid())
-  userId      String
-  periodStart DateTime
-  periodEnd   DateTime
-  periodType  String
+  userId      String   @map("user_id")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  periodType  String   @map("period_type")
 
   created     Int      @default(0)
   done        Int      @default(0)
-  inProgress  Int      @default(0)
+  inProgress  Int      @default(0) @map("in_progress")
   stalled     Int      @default(0)
 
-  rawData     Json?
-  createdAt   DateTime @default(now())
+  rawData     Json?    @map("raw_data")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, periodStart, periodEnd, periodType])
   @@index([userId, periodType])
+  @@map("jira_metrics")
 }
 
 model Summary {
   id          String   @id @default(cuid())
-  userId      String
-  periodStart DateTime
-  periodEnd   DateTime
-  periodType  String
+  userId      String   @map("user_id")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  periodType  String   @map("period_type")
 
   content     String   @db.Text
   model       String
 
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, periodType])
+  @@map("summaries")
 }
