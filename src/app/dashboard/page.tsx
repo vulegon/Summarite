@@ -43,6 +43,7 @@ interface MetricsData {
 import GitHubIcon from "@mui/icons-material/GitHub";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
 import AddLinkIcon from "@mui/icons-material/AddLink";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -71,6 +72,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [aiProvider, setAiProvider] = useState<AIProvider>("gemini");
+  const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -139,6 +141,25 @@ export default function Dashboard() {
 
   const handleProviderChange = (event: SelectChangeEvent) => {
     setAiProvider(event.target.value as AIProvider);
+  };
+
+  const handleDisconnect = async (provider: "github" | "jira") => {
+    setDisconnecting(provider);
+    try {
+      const response = await fetch(`/api/connect/${provider}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to disconnect ${provider}`);
+      }
+
+      // ページをリロードしてセッション情報を更新
+      window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setDisconnecting(null);
+    }
   };
 
   useEffect(() => {
@@ -567,144 +588,204 @@ export default function Dashboard() {
                     p: { xs: 2, sm: 2.5 },
                     display: "flex",
                     alignItems: "center",
-                    gap: 1.5,
+                    justifyContent: "space-between",
                     borderBottom: "1px solid rgba(0,0,0,0.06)",
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: { xs: 32, sm: 40 },
-                      height: { xs: 32, sm: 40 },
-                      borderRadius: 2,
-                      bgcolor: "#24292e",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <GitHubIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
-                    GitHub
-                  </Typography>
-                </Box>
-                <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                  <Grid container spacing={{ xs: 1, sm: 2 }}>
-                    {githubMetricsDisplay.map((metric) => (
-                      <Grid size={{ xs: 6, sm: 4 }} key={metric.label}>
-                        <MetricCard {...metric} />
-                      </Grid>
-                    ))}
-                  </Grid>
-
-                  {/* Code Changes Section */}
-                  <Box
-                    sx={{
-                      mt: 2,
-                      p: { xs: 1.5, sm: 2 },
-                      borderRadius: 2,
-                      background: "linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%)",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle2"
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
                       sx={{
-                        color: "rgba(0,0,0,0.6)",
-                        mb: 1.5,
-                        fontWeight: 600,
-                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                        width: { xs: 32, sm: 40 },
+                        height: { xs: 32, sm: 40 },
+                        borderRadius: 2,
+                        bgcolor: "#24292e",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      コード変更量
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: { xs: 2, sm: 4 }, flexWrap: "wrap" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Box
-                          sx={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 1,
-                            bgcolor: "rgba(34, 197, 94, 0.15)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <AddIcon sx={{ fontSize: 16, color: "#22c55e" }} />
-                        </Box>
-                        <Box>
-                          <Typography
-                            sx={{
-                              fontWeight: 800,
-                              color: "#22c55e",
-                              fontSize: { xs: "1.1rem", sm: "1.25rem" },
-                              lineHeight: 1,
-                            }}
-                          >
-                            +{codeChanges.additions.toLocaleString()}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
-                          >
-                            追加行
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Box
-                          sx={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 1,
-                            bgcolor: "rgba(239, 68, 68, 0.15)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <RemoveIcon sx={{ fontSize: 16, color: "#ef4444" }} />
-                        </Box>
-                        <Box>
-                          <Typography
-                            sx={{
-                              fontWeight: 800,
-                              color: "#ef4444",
-                              fontSize: { xs: "1.1rem", sm: "1.25rem" },
-                              lineHeight: 1,
-                            }}
-                          >
-                            -{codeChanges.deletions.toLocaleString()}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
-                          >
-                            削除行
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: "auto" }}>
-                        <Typography
-                          sx={{
-                            fontWeight: 700,
-                            color: codeChanges.additions - codeChanges.deletions >= 0 ? "#22c55e" : "#ef4444",
-                            fontSize: { xs: "0.9rem", sm: "1rem" },
-                          }}
-                        >
-                          {codeChanges.additions - codeChanges.deletions >= 0 ? "+" : ""}
-                          {(codeChanges.additions - codeChanges.deletions).toLocaleString()} 行
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "rgba(0,0,0,0.4)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
-                        >
-                          純増減
-                        </Typography>
-                      </Box>
+                      <GitHubIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
                     </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
+                      GitHub
+                    </Typography>
                   </Box>
+                  {session.user?.hasGithub && (
+                    <Button
+                      size="small"
+                      startIcon={disconnecting === "github" ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />}
+                      onClick={() => handleDisconnect("github")}
+                      disabled={disconnecting === "github"}
+                      sx={{
+                        color: "rgba(0,0,0,0.4)",
+                        textTransform: "none",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                        "&:hover": {
+                          color: "#ef4444",
+                          bgcolor: "rgba(239, 68, 68, 0.08)",
+                        },
+                      }}
+                    >
+                      {disconnecting === "github" ? "解除中..." : "解除"}
+                    </Button>
+                  )}
+                </Box>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                  {session.user?.hasGithub ? (
+                    <>
+                      <Grid container spacing={{ xs: 1, sm: 2 }}>
+                        {githubMetricsDisplay.map((metric) => (
+                          <Grid size={{ xs: 6, sm: 4 }} key={metric.label}>
+                            <MetricCard {...metric} />
+                          </Grid>
+                        ))}
+                      </Grid>
+
+                      {/* Code Changes Section */}
+                      <Box
+                        sx={{
+                          mt: 2,
+                          p: { xs: 1.5, sm: 2 },
+                          borderRadius: 2,
+                          background: "linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%)",
+                          border: "1px solid rgba(0,0,0,0.06)",
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          sx={{
+                            color: "rgba(0,0,0,0.6)",
+                            mb: 1.5,
+                            fontWeight: 600,
+                            fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                          }}
+                        >
+                          コード変更量
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: { xs: 2, sm: 4 }, flexWrap: "wrap" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 1,
+                                bgcolor: "rgba(34, 197, 94, 0.15)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <AddIcon sx={{ fontSize: 16, color: "#22c55e" }} />
+                            </Box>
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontWeight: 800,
+                                  color: "#22c55e",
+                                  fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                                  lineHeight: 1,
+                                }}
+                              >
+                                +{codeChanges.additions.toLocaleString()}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
+                              >
+                                追加行
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 1,
+                                bgcolor: "rgba(239, 68, 68, 0.15)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <RemoveIcon sx={{ fontSize: 16, color: "#ef4444" }} />
+                            </Box>
+                            <Box>
+                              <Typography
+                                sx={{
+                                  fontWeight: 800,
+                                  color: "#ef4444",
+                                  fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                                  lineHeight: 1,
+                                }}
+                              >
+                                -{codeChanges.deletions.toLocaleString()}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{ color: "rgba(0,0,0,0.5)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
+                              >
+                                削除行
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: "auto" }}>
+                            <Typography
+                              sx={{
+                                fontWeight: 700,
+                                color: codeChanges.additions - codeChanges.deletions >= 0 ? "#22c55e" : "#ef4444",
+                                fontSize: { xs: "0.9rem", sm: "1rem" },
+                              }}
+                            >
+                              {codeChanges.additions - codeChanges.deletions >= 0 ? "+" : ""}
+                              {(codeChanges.additions - codeChanges.deletions).toLocaleString()} 行
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{ color: "rgba(0,0,0,0.4)", fontSize: { xs: "0.65rem", sm: "0.7rem" } }}
+                            >
+                              純増減
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </>
+                  ) : (
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: { xs: 4, sm: 6 },
+                      }}
+                    >
+                      <GitHubIcon sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
+                      <Typography
+                        sx={{
+                          color: "rgba(0,0,0,0.6)",
+                          mb: 3,
+                          fontSize: { xs: "0.875rem", sm: "1rem" },
+                        }}
+                      >
+                        GitHubと連携して開発活動を可視化しましょう
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<GitHubIcon />}
+                        onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+                        sx={{
+                          bgcolor: "#24292e",
+                          textTransform: "none",
+                          fontWeight: 600,
+                          px: 4,
+                          py: 1.5,
+                          "&:hover": {
+                            bgcolor: "#1a1a1a",
+                          },
+                        }}
+                      >
+                        GitHubと連携する
+                      </Button>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -730,35 +811,93 @@ export default function Dashboard() {
                     p: { xs: 2, sm: 2.5 },
                     display: "flex",
                     alignItems: "center",
-                    gap: 1.5,
+                    justifyContent: "space-between",
                     borderBottom: "1px solid rgba(0,0,0,0.06)",
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: { xs: 32, sm: 40 },
-                      height: { xs: 32, sm: 40 },
-                      borderRadius: 2,
-                      bgcolor: "#0052CC",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <AssignmentIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: { xs: 32, sm: 40 },
+                        height: { xs: 32, sm: 40 },
+                        borderRadius: 2,
+                        bgcolor: "#0052CC",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <AssignmentIcon sx={{ color: "white", fontSize: { xs: 18, sm: 24 } }} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
+                      Jira
+                    </Typography>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
-                    Jira
-                  </Typography>
+                  {session.user?.hasJira && (
+                    <Button
+                      size="small"
+                      startIcon={disconnecting === "jira" ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />}
+                      onClick={() => handleDisconnect("jira")}
+                      disabled={disconnecting === "jira"}
+                      sx={{
+                        color: "rgba(0,0,0,0.4)",
+                        textTransform: "none",
+                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                        "&:hover": {
+                          color: "#ef4444",
+                          bgcolor: "rgba(239, 68, 68, 0.08)",
+                        },
+                      }}
+                    >
+                      {disconnecting === "jira" ? "解除中..." : "解除"}
+                    </Button>
+                  )}
                 </Box>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                  <Grid container spacing={{ xs: 1, sm: 2 }}>
-                    {jiraMetricsDisplay.map((metric) => (
-                      <Grid size={{ xs: 6, sm: 6 }} key={metric.label}>
-                        <MetricCard {...metric} />
-                      </Grid>
-                    ))}
-                  </Grid>
+                  {session.user?.hasJira ? (
+                    <Grid container spacing={{ xs: 1, sm: 2 }}>
+                      {jiraMetricsDisplay.map((metric) => (
+                        <Grid size={{ xs: 6, sm: 6 }} key={metric.label}>
+                          <MetricCard {...metric} />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: { xs: 4, sm: 6 },
+                      }}
+                    >
+                      <AssignmentIcon sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
+                      <Typography
+                        sx={{
+                          color: "rgba(0,0,0,0.6)",
+                          mb: 3,
+                          fontSize: { xs: "0.875rem", sm: "1rem" },
+                        }}
+                      >
+                        Jiraと連携してタスク管理を可視化しましょう
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<AssignmentIcon />}
+                        href="/api/connect/jira"
+                        sx={{
+                          bgcolor: "#0052CC",
+                          textTransform: "none",
+                          fontWeight: 600,
+                          px: 4,
+                          py: 1.5,
+                          "&:hover": {
+                            bgcolor: "#0043a8",
+                          },
+                        }}
+                      >
+                        Jiraと連携する
+                      </Button>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>

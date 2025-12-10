@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const JIRA_AUTH_URL = "https://auth.atlassian.com/authorize";
-const JIRA_TOKEN_URL = "https://auth.atlassian.com/oauth/token";
+const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
+const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 
 export async function DELETE() {
   const session = await getServerSession(authOptions);
@@ -25,15 +25,15 @@ export async function DELETE() {
     await prisma.account.deleteMany({
       where: {
         userId: user.id,
-        provider: "jira",
+        provider: "github",
       },
     });
 
-    return NextResponse.json({ success: true, message: "Jira連携を解除しました" });
+    return NextResponse.json({ success: true, message: "GitHub連携を解除しました" });
   } catch (error) {
-    console.error("Jira disconnect error:", error);
+    console.error("GitHub disconnect error:", error);
     return NextResponse.json(
-      { error: "Failed to disconnect Jira" },
+      { error: "Failed to disconnect GitHub" },
       { status: 500 }
     );
   }
@@ -50,54 +50,62 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
 
   if (!code) {
-    const authUrl = new URL(JIRA_AUTH_URL);
-    authUrl.searchParams.set("audience", "api.atlassian.com");
-    authUrl.searchParams.set("client_id", process.env.JIRA_CLIENT_ID!);
-    authUrl.searchParams.set("scope", "read:jira-work read:jira-user offline_access");
-    authUrl.searchParams.set("redirect_uri", `${process.env.NEXTAUTH_URL}/api/connect/jira`);
-    authUrl.searchParams.set("response_type", "code");
-    authUrl.searchParams.set("prompt", "consent");
+    // Redirect to GitHub OAuth
+    const authUrl = new URL(GITHUB_AUTH_URL);
+    authUrl.searchParams.set("client_id", process.env.GITHUB_CLIENT_ID!);
+    authUrl.searchParams.set("scope", "read:user user:email repo");
+    authUrl.searchParams.set(
+      "redirect_uri",
+      `${process.env.NEXTAUTH_URL}/api/connect/github`
+    );
 
     return NextResponse.redirect(authUrl.toString());
   }
 
   try {
-    const tokenResponse = await fetch(JIRA_TOKEN_URL, {
+    // Exchange code for token
+    const tokenResponse = await fetch(GITHUB_TOKEN_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({
-        grant_type: "authorization_code",
-        client_id: process.env.JIRA_CLIENT_ID,
-        client_secret: process.env.JIRA_CLIENT_SECRET,
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
         code,
-        redirect_uri: `${process.env.NEXTAUTH_URL}/api/connect/jira`,
+        redirect_uri: `${process.env.NEXTAUTH_URL}/api/connect/github`,
       }),
     });
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
-      console.error("Jira token error:", error);
+      console.error("GitHub token error:", error);
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard?error=jira_auth_failed`
+        `${process.env.NEXTAUTH_URL}/dashboard?error=github_auth_failed`
       );
     }
 
     const tokens = await tokenResponse.json();
 
-    const resourcesResponse = await fetch(
-      "https://api.atlassian.com/oauth/token/accessible-resources",
-      {
-        headers: {
-          Authorization: `Bearer ${tokens.access_token}`,
-        },
-      }
-    );
+    if (tokens.error) {
+      console.error("GitHub token error:", tokens.error);
+      return NextResponse.redirect(
+        `${process.env.NEXTAUTH_URL}/dashboard?error=github_auth_failed`
+      );
+    }
 
-    const resources = await resourcesResponse.json();
-    const cloudId = resources[0]?.id;
+    // Get GitHub user info
+    const userResponse = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
 
+    const githubUser = await userResponse.json();
+
+    // Find user and save account
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -111,37 +119,41 @@ export async function GET(request: NextRequest) {
     await prisma.account.upsert({
       where: {
         provider_providerAccountId: {
-          provider: "jira",
-          providerAccountId: cloudId || "jira-account",
+          provider: "github",
+          providerAccountId: String(githubUser.id),
         },
       },
       update: {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
-        expiresAt: Math.floor(Date.now() / 1000) + tokens.expires_in,
+        expiresAt: tokens.expires_in
+          ? Math.floor(Date.now() / 1000) + tokens.expires_in
+          : null,
         tokenType: tokens.token_type,
         scope: tokens.scope,
       },
       create: {
         userId: user.id,
         type: "oauth",
-        provider: "jira",
-        providerAccountId: cloudId || "jira-account",
+        provider: "github",
+        providerAccountId: String(githubUser.id),
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
-        expiresAt: Math.floor(Date.now() / 1000) + tokens.expires_in,
+        expiresAt: tokens.expires_in
+          ? Math.floor(Date.now() / 1000) + tokens.expires_in
+          : null,
         tokenType: tokens.token_type,
         scope: tokens.scope,
       },
     });
 
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard?connected=jira`
+      `${process.env.NEXTAUTH_URL}/dashboard?connected=github`
     );
   } catch (error) {
-    console.error("Jira OAuth error:", error);
+    console.error("GitHub OAuth error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard?error=jira_connection_failed`
+      `${process.env.NEXTAUTH_URL}/dashboard?error=github_connection_failed`
     );
   }
 }
