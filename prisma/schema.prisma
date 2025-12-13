@@ -14,8 +14,14 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  // 同期状態: idle, syncing, completed, failed
+  githubSyncStatus  String?   @default("idle") @map("github_sync_status")
+  githubSyncedAt    DateTime? @map("github_synced_at")
+  jiraSyncStatus    String?   @default("idle") @map("jira_sync_status")
+  jiraSyncedAt      DateTime? @map("jira_synced_at")
+
   accounts      Account[]
-  githubMetrics GithubMetric[]
+  githubEvents  GithubEvent[]
   jiraMetrics   JiraMetric[]
   summaries     Summary[]
 
@@ -41,30 +47,24 @@ model Account {
   @@map("accounts")
 }
 
-model GithubMetric {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  periodStart  DateTime @map("period_start")
-  periodEnd    DateTime @map("period_end")
-  periodType   String   @map("period_type")
-
-  prsOpened    Int      @default(0) @map("prs_opened")
-  prsMerged    Int      @default(0) @map("prs_merged")
-  reviews      Int      @default(0)
-  issuesOpened Int      @default(0) @map("issues_opened")
-  issuesClosed Int      @default(0) @map("issues_closed")
-  additions    Int      @default(0)
-  deletions    Int      @default(0)
-  commits      Int      @default(0)
-
-  rawData      Json?    @map("raw_data")
-  createdAt    DateTime @default(now()) @map("created_at")
+model GithubEvent {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  eventType   String   @map("event_type") // "pr_opened", "pr_merged", "review", "issue_opened", "issue_closed"
+  eventDate   DateTime @map("event_date")
+  externalId  String   @map("external_id") // PR番号やIssue番号
+  repo        String?
+  additions   Int?
+  deletions   Int?
+  commits     Int?
+  createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, periodStart, periodEnd, periodType])
-  @@index([userId, periodType])
-  @@map("github_metrics")
+  @@unique([userId, eventType, externalId])
+  @@index([userId, eventDate])
+  @@index([userId, eventType, eventDate])
+  @@map("github_events")
 }
 
 model JiraMetric {

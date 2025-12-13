@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { GitHubService, getGitHubAccessToken } from "@/services/github";
+import { getGitHubMetricsFromDB } from "@/services/sync";
 import { JiraService, getJiraAccessToken } from "@/services/jira";
 import { generateSummary } from "@/services/ai";
 import { getWeeklyPeriod } from "@/lib/period";
-import { SummaryResponse, GithubMetrics, JiraMetrics } from "@/types";
+import { SummaryResponse, JiraMetrics } from "@/types";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -20,15 +20,6 @@ export async function GET(request: NextRequest) {
   const period = getWeeklyPeriod(weeksAgo);
 
   try {
-    const existingMetrics = await prisma.githubMetric.findFirst({
-      where: {
-        userId: session.user.id,
-        periodStart: period.start,
-        periodEnd: period.end,
-        periodType: "weekly",
-      },
-    });
-
     const existingSummary = await prisma.summary.findFirst({
       where: {
         userId: session.user.id,
@@ -38,35 +29,69 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (existingMetrics && existingSummary) {
-      const existingJiraMetrics = await prisma.jiraMetric.findFirst({
-        where: {
-          userId: session.user.id,
-          periodStart: period.start,
-          periodEnd: period.end,
-          periodType: "weekly",
-        },
-      });
+    // DBからGitHubメトリクスを集計
+    const githubMetrics = await getGitHubMetricsFromDB(
+      session.user.id,
+      period.start,
+      period.end
+    );
 
+    // Jiraメトリクスを取得
+    let jiraMetrics: JiraMetrics = {
+      created: 0,
+      done: 0,
+      inProgress: 0,
+      stalled: 0,
+    };
+
+    const existingJiraMetrics = await prisma.jiraMetric.findFirst({
+      where: {
+        userId: session.user.id,
+        periodStart: period.start,
+        periodEnd: period.end,
+        periodType: "weekly",
+      },
+    });
+
+    if (existingJiraMetrics) {
+      jiraMetrics = {
+        created: existingJiraMetrics.created,
+        done: existingJiraMetrics.done,
+        inProgress: existingJiraMetrics.inProgress,
+        stalled: existingJiraMetrics.stalled,
+      };
+    } else {
+      const jiraToken = await getJiraAccessToken(session.user.id);
+      if (jiraToken) {
+        const jiraService = new JiraService(jiraToken);
+        jiraMetrics = await jiraService.getMetrics(period);
+
+        await prisma.jiraMetric.upsert({
+          where: {
+            userId_periodStart_periodEnd_periodType: {
+              userId: session.user.id,
+              periodStart: period.start,
+              periodEnd: period.end,
+              periodType: "weekly",
+            },
+          },
+          update: { ...jiraMetrics },
+          create: {
+            userId: session.user.id,
+            periodStart: period.start,
+            periodEnd: period.end,
+            periodType: "weekly",
+            ...jiraMetrics,
+          },
+        });
+      }
+    }
+
+    // 既存のサマリーがあれば返す
+    if (existingSummary) {
       const response: SummaryResponse = {
-        github: {
-          prsOpened: existingMetrics.prsOpened,
-          prsMerged: existingMetrics.prsMerged,
-          reviews: existingMetrics.reviews,
-          issuesOpened: existingMetrics.issuesOpened,
-          issuesClosed: existingMetrics.issuesClosed,
-          additions: existingMetrics.additions,
-          deletions: existingMetrics.deletions,
-          commits: existingMetrics.commits,
-        },
-        jira: existingJiraMetrics
-          ? {
-              created: existingJiraMetrics.created,
-              done: existingJiraMetrics.done,
-              inProgress: existingJiraMetrics.inProgress,
-              stalled: existingJiraMetrics.stalled,
-            }
-          : { created: 0, done: 0, inProgress: 0, stalled: 0 },
+        github: githubMetrics,
+        jira: jiraMetrics,
         summary: existingSummary.content,
         periodStart: period.start.toISOString(),
         periodEnd: period.end.toISOString(),
@@ -76,74 +101,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response);
     }
 
-    let githubMetrics: GithubMetrics = {
-      prsOpened: 0,
-      prsMerged: 0,
-      reviews: 0,
-      issuesOpened: 0,
-      issuesClosed: 0,
-      additions: 0,
-      deletions: 0,
-      commits: 0,
-    };
-
-    let jiraMetrics: JiraMetrics = {
-      created: 0,
-      done: 0,
-      inProgress: 0,
-      stalled: 0,
-    };
-
-    const githubToken = await getGitHubAccessToken(session.user.id);
-    if (githubToken) {
-      const githubService = new GitHubService(githubToken);
-      githubMetrics = await githubService.getMetrics(period);
-
-      await prisma.githubMetric.upsert({
-        where: {
-          userId_periodStart_periodEnd_periodType: {
-            userId: session.user.id,
-            periodStart: period.start,
-            periodEnd: period.end,
-            periodType: "weekly",
-          },
-        },
-        update: { ...githubMetrics },
-        create: {
-          userId: session.user.id,
-          periodStart: period.start,
-          periodEnd: period.end,
-          periodType: "weekly",
-          ...githubMetrics,
-        },
-      });
-    }
-
-    const jiraToken = await getJiraAccessToken(session.user.id);
-    if (jiraToken) {
-      const jiraService = new JiraService(jiraToken);
-      jiraMetrics = await jiraService.getMetrics(period);
-
-      await prisma.jiraMetric.upsert({
-        where: {
-          userId_periodStart_periodEnd_periodType: {
-            userId: session.user.id,
-            periodStart: period.start,
-            periodEnd: period.end,
-            periodType: "weekly",
-          },
-        },
-        update: { ...jiraMetrics },
-        create: {
-          userId: session.user.id,
-          periodStart: period.start,
-          periodEnd: period.end,
-          periodType: "weekly",
-          ...jiraMetrics,
-        },
-      });
-    }
-
+    // サマリーを生成
     const { summary, model } = await generateSummary(
       githubMetrics,
       jiraMetrics,
