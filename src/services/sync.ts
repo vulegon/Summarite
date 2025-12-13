@@ -155,7 +155,6 @@ export async function getGitHubMetricsFromDB(
         metrics.prsMerged++;
         metrics.additions += event.additions || 0;
         metrics.deletions += event.deletions || 0;
-        // pr_mergedのcommitsは個別PRのコミット数なので加算しない
         break;
       case "review":
         metrics.reviews++;
