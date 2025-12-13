@@ -29,6 +29,7 @@ import {
   FormControl,
   InputLabel,
   SelectChangeEvent,
+  Tooltip,
 } from "@mui/material";
 
 interface MetricsData {
@@ -36,7 +37,7 @@ interface MetricsData {
   jira: JiraMetrics;
   periodStart: string;
   periodEnd: string;
-  periodType: "weekly" | "monthly";
+  periodType: "weekly" | "monthly" | "custom";
   hasSummary: boolean;
   summary?: string;
 }
@@ -58,11 +59,23 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CommitIcon from "@mui/icons-material/Commit";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { SummariteLogo } from "@/components/icons/SummariteLogo";
 
 type SyncStatus = "idle" | "syncing" | "completed" | "failed";
 
 const emptySubscribe = () => () => {};
+
+// デフォルトの日付を計算（今日から1週間前）
+const getDefaultDates = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 7);
+  return {
+    start: start.toISOString().split("T")[0],
+    end: end.toISOString().split("T")[0],
+  };
+};
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -78,21 +91,28 @@ export default function Dashboard() {
   const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
   const [githubSyncStatus, setGithubSyncStatus] = useState<SyncStatus>("idle");
   const [githubSyncedAt, setGithubSyncedAt] = useState<Date | null>(null);
+  const [customStartDate, setCustomStartDate] = useState(getDefaultDates().start);
+  const [customEndDate, setCustomEndDate] = useState(getDefaultDates().end);
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false
   );
 
-  const periodType = activeTab === 0 ? "weekly" : "monthly";
+  const periodType = activeTab === 0 ? "weekly" : activeTab === 1 ? "monthly" : "custom";
 
   const fetchMetrics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = periodType === "weekly"
-        ? "/api/metrics/weekly"
-        : "/api/metrics/monthly";
+      let endpoint: string;
+      if (periodType === "weekly") {
+        endpoint = "/api/metrics/weekly";
+      } else if (periodType === "monthly") {
+        endpoint = "/api/metrics/monthly";
+      } else {
+        endpoint = `/api/metrics/custom?startDate=${customStartDate}&endDate=${customEndDate}`;
+      }
       const response = await fetch(endpoint);
 
       if (!response.ok) {
@@ -111,7 +131,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [periodType]);
+  }, [periodType, customStartDate, customEndDate]);
 
   const generateSummary = async () => {
     if (!metrics) return;
@@ -572,31 +592,77 @@ export default function Dashboard() {
             )}
           </Box>
 
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            sx={{
-              "& .MuiTabs-indicator": {
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                height: 3,
-                borderRadius: 2,
-              },
-              "& .MuiTab-root": {
-                color: "rgba(0,0,0,0.4)",
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: { xs: "0.875rem", sm: "1rem" },
-                minWidth: { xs: 60, sm: 100 },
-                px: { xs: 1.5, sm: 2 },
-                "&.Mui-selected": {
-                  color: "#1a1a2e",
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              sx={{
+                "& .MuiTabs-indicator": {
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  height: 3,
+                  borderRadius: 2,
                 },
-              },
-            }}
-          >
-            <Tab label="週次" />
-            <Tab label="月次" />
-          </Tabs>
+                "& .MuiTab-root": {
+                  color: "rgba(0,0,0,0.4)",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                  minWidth: { xs: 60, sm: 100 },
+                  px: { xs: 1.5, sm: 2 },
+                  "&.Mui-selected": {
+                    color: "#1a1a2e",
+                  },
+                },
+              }}
+            >
+              <Tab label="週次" />
+              <Tab label="月次" />
+              <Tab label="カスタム" />
+            </Tabs>
+
+            {activeTab === 2 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(0,0,0,0.2)",
+                    fontSize: "0.875rem",
+                    outline: "none",
+                  }}
+                />
+                <Typography sx={{ color: "rgba(0,0,0,0.5)" }}>〜</Typography>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(0,0,0,0.2)",
+                    fontSize: "0.875rem",
+                    outline: "none",
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={fetchMetrics}
+                  sx={{
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    ml: 1,
+                  }}
+                >
+                  取得
+                </Button>
+              </Box>
+            )}
+          </Box>
         </Box>
 
         {loading && (
@@ -664,6 +730,39 @@ export default function Dashboard() {
                     <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                       GitHub
                     </Typography>
+                    <Tooltip
+                      title={
+                        <Box sx={{ p: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                            データ取得について
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • 過去3ヶ月分のデータが対象です
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • コード変更量はマージ済みのPRから集計されます
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • Organizationのプライベートリポジトリを取得するには、GitHubでアプリへのアクセス許可が必要です
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ color: "rgba(255,255,255,0.7)", mt: 1 }}>
+                            設定: github.com/settings/applications
+                          </Typography>
+                        </Box>
+                      }
+                      arrow
+                      placement="bottom-start"
+                    >
+                      <HelpOutlineIcon
+                        sx={{
+                          fontSize: { xs: 16, sm: 18 },
+                          color: "rgba(0,0,0,0.4)",
+                          cursor: "help",
+                          ml: 0.5,
+                          "&:hover": { color: "#667eea" },
+                        }}
+                      />
+                    </Tooltip>
                   </Box>
                   {session.user?.hasGithub && (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -952,6 +1051,39 @@ export default function Dashboard() {
                     <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                       Jira
                     </Typography>
+                    <Tooltip
+                      title={
+                        <Box sx={{ p: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                            各項目の集計条件
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • 作成: 期間内に作成されたチケット
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • 完了: 期間内に完了（Done）したチケット
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • 進行中: 期間内に更新された進行中のチケット
+                          </Typography>
+                          <Typography variant="caption" component="div">
+                            • 停滞: 期間より前に作成され未完了のチケット
+                          </Typography>
+                        </Box>
+                      }
+                      arrow
+                      placement="bottom-start"
+                    >
+                      <HelpOutlineIcon
+                        sx={{
+                          fontSize: { xs: 16, sm: 18 },
+                          color: "rgba(0,0,0,0.4)",
+                          cursor: "help",
+                          ml: 0.5,
+                          "&:hover": { color: "#0052CC" },
+                        }}
+                      />
+                    </Tooltip>
                   </Box>
                   {session.user?.hasJira && (
                     <Button
