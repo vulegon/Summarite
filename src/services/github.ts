@@ -33,14 +33,14 @@ interface ContributionsCollectionResponse {
       totalPullRequestContributions: number;
       totalPullRequestReviewContributions: number;
       totalIssueContributions: number;
-      commitContributionsByRepository: Array<{
-        repository: {
-          nameWithOwner: string;
-        };
-        contributions: {
-          totalCount: number;
-        };
-      }>;
+      contributionCalendar: {
+        weeks: Array<{
+          contributionDays: Array<{
+            date: string;
+            contributionCount: number;
+          }>;
+        }>;
+      };
     };
   };
 }
@@ -606,6 +606,10 @@ export class GitHubService {
     return events;
   }
 
+  /**
+   * contributionCalendarを使用して日別のコミット数を取得
+   * 正確な日付でコミットを記録するため、週次/月次の集計が正しく動作する
+   */
   private async fetchCommitContributions(
     startDate: Date,
     endDate: Date
@@ -627,12 +631,12 @@ export class GitHubService {
             login
             contributionsCollection(from: $from, to: $to) {
               totalCommitContributions
-              commitContributionsByRepository(maxRepositories: 100) {
-                repository {
-                  nameWithOwner
-                }
-                contributions {
-                  totalCount
+              contributionCalendar {
+                weeks {
+                  contributionDays {
+                    date
+                    contributionCount
+                  }
                 }
               }
             }
@@ -641,21 +645,27 @@ export class GitHubService {
       `;
 
       try {
-        const data = await this.graphql<ContributionsCollectionResponse>(query, {
+        const data: ContributionsCollectionResponse = await this.graphql<ContributionsCollectionResponse>(query, {
           from: currentStart.toISOString(),
           to: currentEnd.toISOString(),
         });
 
-        // リポジトリごとのコミット数をイベントとして追加
-        for (const repoContrib of data.viewer.contributionsCollection.commitContributionsByRepository) {
-          if (repoContrib.contributions.totalCount > 0) {
-            events.push({
-              eventType: "commit",
-              eventDate: currentStart, // 期間の開始日をイベント日とする
-              externalId: `${repoContrib.repository.nameWithOwner}-commits-${currentStart.toISOString().split("T")[0]}`,
-              repo: repoContrib.repository.nameWithOwner,
-              commits: repoContrib.contributions.totalCount,
-            });
+        // 日別のコミット数をイベントとして追加
+        for (const week of data.viewer.contributionsCollection.contributionCalendar.weeks) {
+          for (const day of week.contributionDays) {
+            if (day.contributionCount > 0) {
+              const eventDate = new Date(day.date);
+              // 期間内のみ追加
+              if (eventDate >= startDate && eventDate <= endDate) {
+                events.push({
+                  eventType: "commit",
+                  eventDate: eventDate,
+                  externalId: `commits-${day.date}`,
+                  repo: "all", // 日別の集計なのでリポジトリは特定しない
+                  commits: day.contributionCount,
+                });
+              }
+            }
           }
         }
       } catch (error) {
