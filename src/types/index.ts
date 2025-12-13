@@ -30,5 +30,5 @@ export type AIProvider = "openai" | "anthropic" | "gemini";
 export interface Period {
   start: Date;
   end: Date;
-  type: "weekly" | "monthly";
+  type: "weekly" | "monthly" | "custom";
 }
