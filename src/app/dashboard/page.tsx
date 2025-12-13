@@ -58,6 +58,8 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CommitIcon from "@mui/icons-material/Commit";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import { Tooltip } from "@mui/material";
 import { SummariteLogo } from "@/components/icons/SummariteLogo";
 
 type SyncStatus = "idle" | "syncing" | "completed" | "failed";
@@ -664,6 +666,38 @@ export default function Dashboard() {
                     <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a1a2e", fontSize: { xs: "1rem", sm: "1.25rem" } }}>
                       GitHub
                     </Typography>
+                    <Tooltip
+                      title={
+                        <Box sx={{ p: 0.5 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                            データ取得について
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • 過去3ヶ月分のデータを取得します
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • コード変更量はマージ済みPRから集計されます
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
+                            • Organizationのプライベートリポジトリは、GitHubの設定でアプリへのアクセスを許可する必要があります
+                          </Typography>
+                          <Typography variant="caption" component="div" sx={{ color: "rgba(255,255,255,0.7)" }}>
+                            設定: github.com/settings/applications
+                          </Typography>
+                        </Box>
+                      }
+                      arrow
+                      placement="bottom-start"
+                    >
+                      <HelpOutlineIcon
+                        sx={{
+                          fontSize: { xs: 16, sm: 18 },
+                          color: "rgba(0,0,0,0.4)",
+                          cursor: "help",
+                          "&:hover": { color: "#667eea" },
+                        }}
+                      />
+                    </Tooltip>
                   </Box>
                   {session.user?.hasGithub && (
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
