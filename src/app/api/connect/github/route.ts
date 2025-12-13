@@ -147,6 +147,25 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // 同期開始を記録
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { githubSyncStatus: "syncing" },
+    });
+
+    // バックグラウンドで同期を開始（awaitしない）
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    fetch(`${baseUrl}/api/metrics/sync-worker`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": process.env.NEXTAUTH_SECRET || "",
+      },
+      body: JSON.stringify({ userId: user.id }),
+    }).catch((error) => {
+      console.error("Failed to trigger sync worker:", error);
+    });
+
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}/dashboard?connected=github`
     );

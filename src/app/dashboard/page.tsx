@@ -57,7 +57,10 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CommitIcon from "@mui/icons-material/Commit";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { SummariteLogo } from "@/components/icons/SummariteLogo";
+
+type SyncStatus = "idle" | "syncing" | "completed" | "failed";
 
 const emptySubscribe = () => () => {};
 
@@ -73,6 +76,8 @@ export default function Dashboard() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [aiProvider, setAiProvider] = useState<AIProvider>("gemini");
   const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
+  const [githubSyncStatus, setGithubSyncStatus] = useState<SyncStatus>("idle");
+  const [githubSyncedAt, setGithubSyncedAt] = useState<Date | null>(null);
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -162,6 +167,55 @@ export default function Dashboard() {
     }
   };
 
+  // 同期状態を取得
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/metrics/status");
+      if (response.ok) {
+        const data = await response.json();
+        setGithubSyncStatus(data.github.status);
+        setGithubSyncedAt(data.github.syncedAt ? new Date(data.github.syncedAt) : null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sync status:", err);
+    }
+  }, []);
+
+  // 再取得ボタンのハンドラ
+  const handleRefreshGitHub = async () => {
+    try {
+      const response = await fetch("/api/metrics/sync", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start sync");
+      }
+
+      setGithubSyncStatus("syncing");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
+  // 同期状態をポーリング
+  useEffect(() => {
+    if (githubSyncStatus === "syncing") {
+      const interval = setInterval(async () => {
+        await fetchSyncStatus();
+      }, 2000);
+
+      return () => clearInterval(interval);
+    }
+  }, [githubSyncStatus, fetchSyncStatus]);
+
+  // 同期完了時にメトリクスを再取得
+  useEffect(() => {
+    if (githubSyncStatus === "completed") {
+      fetchMetrics();
+    }
+  }, [githubSyncStatus, fetchMetrics]);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");
@@ -171,8 +225,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (session) {
       fetchMetrics();
+      fetchSyncStatus();
     }
-  }, [session, fetchMetrics]);
+  }, [session, fetchMetrics, fetchSyncStatus]);
 
   if (!mounted || status === "loading") {
     return (
@@ -611,28 +666,93 @@ export default function Dashboard() {
                     </Typography>
                   </Box>
                   {session.user?.hasGithub && (
-                    <Button
-                      size="small"
-                      startIcon={disconnecting === "github" ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />}
-                      onClick={() => handleDisconnect("github")}
-                      disabled={disconnecting === "github"}
-                      sx={{
-                        color: "rgba(0,0,0,0.4)",
-                        textTransform: "none",
-                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                        "&:hover": {
-                          color: "#ef4444",
-                          bgcolor: "rgba(239, 68, 68, 0.08)",
-                        },
-                      }}
-                    >
-                      {disconnecting === "github" ? "解除中..." : "解除"}
-                    </Button>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {githubSyncedAt && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "rgba(0,0,0,0.4)",
+                            fontSize: { xs: "0.6rem", sm: "0.7rem" },
+                            display: { xs: "none", sm: "block" },
+                          }}
+                        >
+                          {format(githubSyncedAt, "M/d HH:mm", { locale: ja })}更新
+                        </Typography>
+                      )}
+                      <Button
+                        size="small"
+                        startIcon={
+                          githubSyncStatus === "syncing" ? (
+                            <CircularProgress size={14} color="inherit" />
+                          ) : (
+                            <RefreshIcon />
+                          )
+                        }
+                        onClick={handleRefreshGitHub}
+                        disabled={githubSyncStatus === "syncing"}
+                        sx={{
+                          color: githubSyncStatus === "syncing" ? "#667eea" : "rgba(0,0,0,0.5)",
+                          textTransform: "none",
+                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                          minWidth: "auto",
+                          "&:hover": {
+                            color: "#667eea",
+                            bgcolor: "rgba(102, 126, 234, 0.08)",
+                          },
+                        }}
+                      >
+                        {githubSyncStatus === "syncing" ? "同期中..." : "再取得"}
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={disconnecting === "github" ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />}
+                        onClick={() => handleDisconnect("github")}
+                        disabled={disconnecting === "github"}
+                        sx={{
+                          color: "rgba(0,0,0,0.4)",
+                          textTransform: "none",
+                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                          "&:hover": {
+                            color: "#ef4444",
+                            bgcolor: "rgba(239, 68, 68, 0.08)",
+                          },
+                        }}
+                      >
+                        {disconnecting === "github" ? "解除中..." : "解除"}
+                      </Button>
+                    </Box>
                   )}
                 </Box>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                   {session.user?.hasGithub ? (
                     <>
+                      {/* 同期中バナー */}
+                      {githubSyncStatus === "syncing" && (
+                        <Box
+                          sx={{
+                            mb: 2,
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: "rgba(102, 126, 234, 0.1)",
+                            border: "1px solid rgba(102, 126, 234, 0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 1.5,
+                          }}
+                        >
+                          <CircularProgress size={18} sx={{ color: "#667eea" }} />
+                          <Typography
+                            sx={{
+                              color: "#667eea",
+                              fontWeight: 600,
+                              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                            }}
+                          >
+                            GitHubからデータを取得中...
+                          </Typography>
+                        </Box>
+                      )}
                       <Grid container spacing={{ xs: 1, sm: 2 }}>
                         {githubMetricsDisplay.map((metric) => (
                           <Grid size={{ xs: 6, sm: 4 }} key={metric.label}>
