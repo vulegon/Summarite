@@ -90,7 +90,7 @@ function SignInContent() {
               variant="body2"
               sx={{ color: "rgba(255,255,255,0.8)", fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
             >
-              開発チームの成果をAIが自動で要約
+              あなたの開発実績をAIが自動で要約
             </Typography>
           </Box>
 

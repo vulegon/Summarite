@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Summarite - Dev Team Metrics Dashboard",
-  description: "GitHub & Jira metrics with AI-powered summaries",
+  title: "Summarite - 個人の開発実績ダッシュボード",
+  description: "GitHubとJiraのメトリクスをAIが自動で要約",
 };
 
 export default function RootLayout({

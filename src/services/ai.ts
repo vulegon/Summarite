@@ -39,7 +39,7 @@ function buildPrompt(options: GenerateSummaryOptions): string {
 `;
   }
 
-  return `以下は開発チームの${periodLabel}活動データです。このデータを分析し、チームの成果と改善点を簡潔に要約してください。
+  return `以下はあなたの${periodLabel}活動データです。このデータを分析し、成果と改善点を簡潔に要約してください。
 ${metricsSection}
 以下のマークダウン形式で要約を作成してください。
 
@@ -76,7 +76,7 @@ async function generateWithGemini(
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const systemPrompt =
-    "あなたは開発チームのパフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。";
+    "あなたは個人の開発パフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。";
 
   const result = await model.generateContent(`${systemPrompt}\n\n${prompt}`);
   const response = result.response;

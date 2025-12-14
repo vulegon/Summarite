@@ -130,7 +130,7 @@ export default function Home() {
                 lineHeight: 1.2,
               }}
             >
-              開発チームの成果を
+              あなたの開発実績を
               <br />
               AIが自動で要約
             </Typography>
@@ -211,7 +211,7 @@ export default function Home() {
             主な機能
           </Typography>
           <Typography variant="body1" sx={{ color: "grey.600", fontSize: { xs: "0.875rem", sm: "1rem" } }}>
-            開発チームの活動を可視化し、振り返りを効率化
+            あなたの活動を可視化し、振り返りを効率化
           </Typography>
         </Box>
 
@@ -445,12 +445,12 @@ export default function Home() {
                     <GroupsIcon sx={{ color: "#16a34a", fontSize: { xs: 24, sm: 28 } }} />
                   </Avatar>
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
-                    開発者 / PM
+                    開発者
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
-                    チームや個人の活動量を把握したい方。
+                    自分の活動量を可視化したい方。
                     週次・月次の成果を数値で確認し、
-                    1on1やパフォーマンスレビューに活用できます。
+                    振り返りや自己評価に活用できます。
                   </Typography>
                 </CardContent>
               </Card>
@@ -477,11 +477,11 @@ export default function Home() {
                     <SpeedIcon sx={{ color: "#d97706", fontSize: { xs: 24, sm: 28 } }} />
                   </Avatar>
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: { xs: 1, sm: 2 }, fontSize: { xs: "1rem", sm: "1.25rem" } }}>
-                    スクラムチーム
+                    効率化したい方
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.8rem", sm: "0.875rem" } }}>
-                    スプリント振り返りを効率化したい方。
-                    レトロスペクティブの事前準備として、
+                    振り返りを効率化したい方。
+                    週次・月次の振り返り準備として、
                     AIが生成したサマリーを活用できます。
                   </Typography>
                 </CardContent>
