@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateSummary } from "@/services/ai";
-import { GithubMetrics, JiraMetrics, AIProvider } from "@/types";
+import { GithubMetrics, JiraMetrics } from "@/types";
 
 interface GenerateSummaryRequest {
   github: GithubMetrics;
@@ -11,7 +11,6 @@ interface GenerateSummaryRequest {
   periodType: "weekly" | "monthly";
   periodStart: string;
   periodEnd: string;
-  provider: AIProvider;
 }
 
 export async function POST(request: NextRequest) {
@@ -23,13 +22,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: GenerateSummaryRequest = await request.json();
-    const { github, jira, periodType, periodStart, periodEnd, provider } = body;
+    const { github, jira, periodType, periodStart, periodEnd } = body;
 
     const { summary, model } = await generateSummary(
       github,
       jira,
-      periodType,
-      provider
+      periodType
     );
 
     // Save to database
@@ -59,8 +57,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ summary, model });
   } catch (error) {
     console.error("Generate summary error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to generate summary" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
