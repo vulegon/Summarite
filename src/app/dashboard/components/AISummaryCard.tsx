@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -16,26 +16,68 @@ import {
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import ReactMarkdown from "react-markdown";
+import { MetricsData } from "../actions";
 
 interface AISummaryCardProps {
-  summary: string | null;
-  summaryLoading: boolean;
+  initialSummary: string | null;
   canGenerateSummary: boolean;
-  aiModel: string;
-  onModelChange: (event: SelectChangeEvent) => void;
-  onGenerateSummary: () => void;
+  metrics: MetricsData;
+  hasGithub: boolean;
+  hasJira: boolean;
 }
 
 const aiModels = [{ value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" }];
 
-export const AISummaryCard = memo(function AISummaryCard({
-  summary,
-  summaryLoading,
+export function AISummaryCard({
+  initialSummary,
   canGenerateSummary,
-  aiModel,
-  onModelChange,
-  onGenerateSummary,
+  metrics,
+  hasGithub,
+  hasJira,
 }: AISummaryCardProps) {
+  const [summary, setSummary] = useState<string | null>(initialSummary);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleModelChange = useCallback((event: SelectChangeEvent) => {
+    setAiModel(event.target.value);
+  }, []);
+
+  const handleGenerateSummary = useCallback(async () => {
+    if (!metrics || !canGenerateSummary) return;
+
+    setSummaryLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/generate-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          github: metrics.github,
+          jira: metrics.jira,
+          periodType: metrics.periodType,
+          periodStart: metrics.periodStart,
+          periodEnd: metrics.periodEnd,
+          hasGithub,
+          hasJira,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate summary");
+      }
+
+      setSummary(data.summary);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [metrics, canGenerateSummary, hasGithub, hasJira]);
+
   return (
     <Card
       sx={{
@@ -107,7 +149,7 @@ export const AISummaryCard = memo(function AISummaryCard({
               labelId="ai-model-label"
               value={aiModel}
               label="AIモデル"
-              onChange={onModelChange}
+              onChange={handleModelChange}
               sx={{
                 bgcolor: "rgba(0,0,0,0.02)",
                 "& .MuiOutlinedInput-notchedOutline": {
@@ -124,7 +166,7 @@ export const AISummaryCard = memo(function AISummaryCard({
           </FormControl>
           <Button
             variant="contained"
-            onClick={onGenerateSummary}
+            onClick={handleGenerateSummary}
             disabled={summaryLoading || !canGenerateSummary}
             startIcon={
               summaryLoading ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />
@@ -148,6 +190,19 @@ export const AISummaryCard = memo(function AISummaryCard({
         </Box>
       </Box>
       <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        {error && (
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+            }}
+          >
+            <Typography sx={{ color: "#dc2626", fontSize: "0.875rem" }}>{error}</Typography>
+          </Box>
+        )}
         {summary ? (
           <Box
             sx={{
@@ -200,4 +255,4 @@ export const AISummaryCard = memo(function AISummaryCard({
       </CardContent>
     </Card>
   );
-});
+}

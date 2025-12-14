@@ -1,7 +1,5 @@
-import { useId } from "react";
-
 export function SummariteLogo({ size = 32 }: { size?: number }) {
-  const id = useId();
+  const id = "summarite-logo-gradient";
 
   return (
     <svg

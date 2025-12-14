@@ -1,6 +1,7 @@
 "use client";
 
-import { memo } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import {
   Box,
@@ -34,22 +35,23 @@ type SyncStatus = "idle" | "syncing" | "completed" | "failed";
 interface GitHubCardProps {
   hasGithub: boolean;
   metrics: GithubMetrics | null;
-  syncStatus: SyncStatus;
-  syncedAt: Date | null;
-  disconnecting: boolean;
-  onRefresh: () => void;
-  onDisconnect: () => void;
+  initialSyncStatus: SyncStatus;
+  initialSyncedAt?: string | null;
 }
 
-export const GitHubCard = memo(function GitHubCard({
+export function GitHubCard({
   hasGithub,
   metrics,
-  syncStatus,
-  syncedAt,
-  disconnecting,
-  onRefresh,
-  onDisconnect,
+  initialSyncStatus,
+  initialSyncedAt,
 }: GitHubCardProps) {
+  const router = useRouter();
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(initialSyncStatus);
+  const [syncedAt, setSyncedAt] = useState<Date | null>(
+    initialSyncedAt ? new Date(initialSyncedAt) : null
+  );
+  const [disconnecting, setDisconnecting] = useState(false);
+
   const githubMetricsDisplay = [
     { label: "作成PR", value: metrics?.prsOpened ?? 0, icon: TrendingUpIcon, color: "#3b82f6" },
     { label: "マージPR", value: metrics?.prsMerged ?? 0, icon: MergeIcon, color: "#22c55e" },
@@ -63,6 +65,66 @@ export const GitHubCard = memo(function GitHubCard({
     additions: metrics?.additions ?? 0,
     deletions: metrics?.deletions ?? 0,
   };
+
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/metrics/status");
+      if (response.ok) {
+        const data = await response.json();
+        setSyncStatus(data.github.status);
+        setSyncedAt(data.github.syncedAt ? new Date(data.github.syncedAt) : null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sync status:", err);
+    }
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      const response = await fetch("/api/metrics/sync", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start sync");
+      }
+
+      setSyncStatus("syncing");
+    } catch (err) {
+      console.error("Sync error:", err);
+    }
+  }, []);
+
+  const handleDisconnect = useCallback(async () => {
+    setDisconnecting(true);
+    try {
+      const response = await fetch("/api/connect/github", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to disconnect GitHub");
+      }
+
+      window.location.reload();
+    } catch (err) {
+      console.error("Disconnect error:", err);
+      setDisconnecting(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (syncStatus === "syncing") {
+      const interval = setInterval(fetchSyncStatus, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [syncStatus, fetchSyncStatus]);
+
+  useEffect(() => {
+    if (syncStatus === "completed") {
+      router.refresh();
+    }
+  }, [syncStatus, router]);
 
   return (
     <Card
@@ -169,7 +231,7 @@ export const GitHubCard = memo(function GitHubCard({
                   <RefreshIcon />
                 )
               }
-              onClick={onRefresh}
+              onClick={handleRefresh}
               disabled={syncStatus === "syncing"}
               sx={{
                 color: syncStatus === "syncing" ? "#667eea" : "rgba(0,0,0,0.5)",
@@ -189,7 +251,7 @@ export const GitHubCard = memo(function GitHubCard({
               startIcon={
                 disconnecting ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />
               }
-              onClick={onDisconnect}
+              onClick={handleDisconnect}
               disabled={disconnecting}
               sx={{
                 color: "rgba(0,0,0,0.4)",
@@ -209,7 +271,6 @@ export const GitHubCard = memo(function GitHubCard({
       <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
         {hasGithub ? (
           <>
-            {/* 同期中バナー */}
             {syncStatus === "syncing" && (
               <Box
                 sx={{
@@ -244,7 +305,6 @@ export const GitHubCard = memo(function GitHubCard({
               ))}
             </Grid>
 
-            {/* Code Changes Section */}
             <Box
               sx={{
                 mt: 2,
@@ -394,4 +454,4 @@ export const GitHubCard = memo(function GitHubCard({
       </CardContent>
     </Card>
   );
-});
+}

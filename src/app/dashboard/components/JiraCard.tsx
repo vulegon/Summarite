@@ -1,6 +1,7 @@
 "use client";
 
-import { memo } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -29,28 +30,89 @@ type SyncStatus = "idle" | "syncing" | "completed" | "failed";
 interface JiraCardProps {
   hasJira: boolean;
   metrics: JiraMetrics | null;
-  syncStatus: SyncStatus;
-  syncedAt: Date | null;
-  disconnecting: boolean;
-  onRefresh: () => void;
-  onDisconnect: () => void;
+  initialSyncStatus: SyncStatus;
+  initialSyncedAt?: string | null;
 }
 
-export const JiraCard = memo(function JiraCard({
+export function JiraCard({
   hasJira,
   metrics,
-  syncStatus,
-  syncedAt,
-  disconnecting,
-  onRefresh,
-  onDisconnect,
+  initialSyncStatus,
+  initialSyncedAt,
 }: JiraCardProps) {
+  const router = useRouter();
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(initialSyncStatus);
+  const [syncedAt, setSyncedAt] = useState<Date | null>(
+    initialSyncedAt ? new Date(initialSyncedAt) : null
+  );
+  const [disconnecting, setDisconnecting] = useState(false);
+
   const jiraMetricsDisplay = [
     { label: "作成", value: metrics?.created ?? 0, icon: TrendingUpIcon, color: "#0052CC" },
     { label: "完了", value: metrics?.done ?? 0, icon: CheckCircleIcon, color: "#22c55e" },
     { label: "進行中", value: metrics?.inProgress ?? 0, icon: HourglassEmptyIcon, color: "#06b6d4" },
     { label: "停滞", value: metrics?.stalled ?? 0, icon: WarningIcon, color: "#ef4444" },
   ];
+
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/metrics/status");
+      if (response.ok) {
+        const data = await response.json();
+        setSyncStatus(data.jira.status);
+        setSyncedAt(data.jira.syncedAt ? new Date(data.jira.syncedAt) : null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sync status:", err);
+    }
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    try {
+      const response = await fetch("/api/metrics/jira-sync", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start Jira sync");
+      }
+
+      setSyncStatus("syncing");
+    } catch (err) {
+      console.error("Sync error:", err);
+    }
+  }, []);
+
+  const handleDisconnect = useCallback(async () => {
+    setDisconnecting(true);
+    try {
+      const response = await fetch("/api/connect/jira", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to disconnect Jira");
+      }
+
+      window.location.reload();
+    } catch (err) {
+      console.error("Disconnect error:", err);
+      setDisconnecting(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (syncStatus === "syncing") {
+      const interval = setInterval(fetchSyncStatus, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [syncStatus, fetchSyncStatus]);
+
+  useEffect(() => {
+    if (syncStatus === "completed") {
+      router.refresh();
+    }
+  }, [syncStatus, router]);
 
   return (
     <Card
@@ -153,7 +215,7 @@ export const JiraCard = memo(function JiraCard({
                   <RefreshIcon />
                 )
               }
-              onClick={onRefresh}
+              onClick={handleRefresh}
               disabled={syncStatus === "syncing"}
               sx={{
                 color: syncStatus === "syncing" ? "#0052CC" : "rgba(0,0,0,0.5)",
@@ -173,7 +235,7 @@ export const JiraCard = memo(function JiraCard({
               startIcon={
                 disconnecting ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />
               }
-              onClick={onDisconnect}
+              onClick={handleDisconnect}
               disabled={disconnecting}
               sx={{
                 color: "rgba(0,0,0,0.4)",
@@ -193,7 +255,6 @@ export const JiraCard = memo(function JiraCard({
       <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
         {hasJira ? (
           <>
-            {/* 同期中バナー */}
             {syncStatus === "syncing" && (
               <Box
                 sx={{
@@ -267,4 +328,4 @@ export const JiraCard = memo(function JiraCard({
       </CardContent>
     </Card>
   );
-});
+}

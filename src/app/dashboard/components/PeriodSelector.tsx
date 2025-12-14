@@ -1,40 +1,113 @@
 "use client";
 
-import { memo } from "react";
+import { useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Tabs, Tab, Chip, Button, Typography } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+import { PeriodType } from "../actions";
 
 interface PeriodSelectorProps {
-  activeTab: number;
-  onTabChange: (event: React.SyntheticEvent, newValue: number) => void;
+  currentPeriod: PeriodType;
   periodStart?: string;
   periodEnd?: string;
-  customStartDate: string;
-  customEndDate: string;
-  onCustomStartDateChange: (value: string) => void;
-  onCustomEndDateChange: (value: string) => void;
-  onFetchMetrics: () => void;
-  formatPeriod: (start: string, end: string) => string;
+  customStart?: string;
+  customEnd?: string;
 }
 
-export const PeriodSelector = memo(function PeriodSelector({
-  activeTab,
-  onTabChange,
+const getDefaultDates = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 7);
+  return {
+    start: start.toISOString().split("T")[0],
+    end: end.toISOString().split("T")[0],
+  };
+};
+
+const periodToTab = (period: PeriodType): number => {
+  switch (period) {
+    case "weekly":
+      return 0;
+    case "monthly":
+      return 1;
+    case "custom":
+      return 2;
+    default:
+      return 0;
+  }
+};
+
+const tabToPeriod = (tab: number): PeriodType => {
+  switch (tab) {
+    case 0:
+      return "weekly";
+    case 1:
+      return "monthly";
+    case 2:
+      return "custom";
+    default:
+      return "weekly";
+  }
+};
+
+export function PeriodSelector({
+  currentPeriod,
   periodStart,
   periodEnd,
-  customStartDate,
-  customEndDate,
-  onCustomStartDateChange,
-  onCustomEndDateChange,
-  onFetchMetrics,
-  formatPeriod,
+  customStart,
+  customEnd,
 }: PeriodSelectorProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const defaults = getDefaultDates();
+
+  const [startDate, setStartDate] = useState(customStart ?? defaults.start);
+  const [endDate, setEndDate] = useState(customEnd ?? defaults.end);
+
+  const activeTab = periodToTab(currentPeriod);
+
+  const handleTabChange = useCallback(
+    (_event: React.SyntheticEvent, newValue: number) => {
+      const period = tabToPeriod(newValue);
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (period === "custom") {
+        params.set("period", "custom");
+        params.set("start", startDate);
+        params.set("end", endDate);
+      } else {
+        params.set("period", period);
+        params.delete("start");
+        params.delete("end");
+      }
+
+      router.push(`/dashboard?${params.toString()}`);
+    },
+    [router, searchParams, startDate, endDate]
+  );
+
+  const handleFetchCustom = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("period", "custom");
+    params.set("start", startDate);
+    params.set("end", endDate);
+    router.push(`/dashboard?${params.toString()}`);
+  }, [router, searchParams, startDate, endDate]);
+
+  const formatPeriod = useCallback((start: string, end: string) => {
+    const startDateObj = new Date(start);
+    const endDateObj = new Date(end);
+    return `${format(startDateObj, "M月d日", { locale: ja })} 〜 ${format(endDateObj, "M月d日", { locale: ja })}`;
+  }, []);
+
   return (
     <Box sx={{ mb: { xs: 2, sm: 4 } }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
         <Tabs
           value={activeTab}
-          onChange={onTabChange}
+          onChange={handleTabChange}
           sx={{
             "& .MuiTabs-indicator": {
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -63,8 +136,8 @@ export const PeriodSelector = memo(function PeriodSelector({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <input
               type="date"
-              value={customStartDate}
-              onChange={(e) => onCustomStartDateChange(e.target.value)}
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
               style={{
                 padding: "8px 12px",
                 borderRadius: "8px",
@@ -76,8 +149,8 @@ export const PeriodSelector = memo(function PeriodSelector({
             <Typography sx={{ color: "rgba(0,0,0,0.5)" }}>〜</Typography>
             <input
               type="date"
-              value={customEndDate}
-              onChange={(e) => onCustomEndDateChange(e.target.value)}
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
               style={{
                 padding: "8px 12px",
                 borderRadius: "8px",
@@ -89,7 +162,7 @@ export const PeriodSelector = memo(function PeriodSelector({
             <Button
               variant="contained"
               size="small"
-              onClick={onFetchMetrics}
+              onClick={handleFetchCustom}
               sx={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 textTransform: "none",
@@ -121,4 +194,4 @@ export const PeriodSelector = memo(function PeriodSelector({
       </Box>
     </Box>
   );
-});
+}

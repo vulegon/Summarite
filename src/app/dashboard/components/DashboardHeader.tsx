@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { useState, useCallback } from "react";
 import { signIn, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,21 +29,23 @@ interface DashboardHeaderProps {
     hasGithub?: boolean;
     hasJira?: boolean;
   };
-  anchorEl: HTMLElement | null;
-  onUserMenuOpen: (event: React.MouseEvent<HTMLElement>) => void;
-  onUserMenuClose: () => void;
 }
 
-export const DashboardHeader = memo(function DashboardHeader({
-  user,
-  anchorEl,
-  onUserMenuOpen,
-  onUserMenuClose,
-}: DashboardHeaderProps) {
-  const handleLogout = () => {
-    onUserMenuClose();
+export function DashboardHeader({ user }: DashboardHeaderProps) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const handleUserMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  }, []);
+
+  const handleUserMenuClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    handleUserMenuClose();
     signOut();
-  };
+  }, [handleUserMenuClose]);
 
   return (
     <Box
@@ -88,7 +90,6 @@ export const DashboardHeader = memo(function DashboardHeader({
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
-            {/* GitHub連携状態 */}
             {user.hasGithub ? (
               <Chip
                 icon={<GitHubIcon sx={{ fontSize: 16 }} />}
@@ -129,7 +130,6 @@ export const DashboardHeader = memo(function DashboardHeader({
               </Button>
             )}
 
-            {/* Jira連携状態 */}
             {user.hasJira ? (
               <Chip
                 icon={<AssignmentIcon sx={{ fontSize: 16 }} />}
@@ -170,7 +170,7 @@ export const DashboardHeader = memo(function DashboardHeader({
               </Button>
             )}
 
-            <IconButton onClick={onUserMenuOpen} sx={{ p: 0 }}>
+            <IconButton onClick={handleUserMenuOpen} sx={{ p: 0 }}>
               {user.image ? (
                 <Image
                   src={user.image}
@@ -198,7 +198,7 @@ export const DashboardHeader = memo(function DashboardHeader({
             <Popover
               open={Boolean(anchorEl)}
               anchorEl={anchorEl}
-              onClose={onUserMenuClose}
+              onClose={handleUserMenuClose}
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
               sx={{ mt: 1 }}
@@ -268,4 +268,4 @@ export const DashboardHeader = memo(function DashboardHeader({
       </Container>
     </Box>
   );
-});
+}
