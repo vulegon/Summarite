@@ -1,7 +1,5 @@
-import OpenAI from "openai";
-import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GithubMetrics, JiraMetrics, AIProvider } from "@/types";
+import { GithubMetrics, JiraMetrics } from "@/types";
 
 function buildPrompt(
   github: GithubMetrics,
@@ -40,86 +38,21 @@ function buildPrompt(
 export async function generateSummary(
   github: GithubMetrics,
   jira: JiraMetrics,
-  periodType: "weekly" | "monthly",
-  provider?: AIProvider
+  periodType: "weekly" | "monthly"
 ): Promise<{ summary: string; model: string }> {
-  const selectedProvider = provider || (process.env.AI_PROVIDER as AIProvider) || "gemini";
   const prompt = buildPrompt(github, jira, periodType);
-
-  if (selectedProvider === "openai") {
-    return generateWithOpenAI(prompt);
-  } else if (selectedProvider === "anthropic") {
-    return generateWithAnthropic(prompt);
-  } else {
-    return generateWithGemini(prompt);
-  }
-}
-
-async function generateWithOpenAI(
-  prompt: string
-): Promise<{ summary: string; model: string }> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4-turbo-preview",
-    messages: [
-      {
-        role: "system",
-        content:
-          "あなたは開発チームのパフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-    max_tokens: 1000,
-    temperature: 0.7,
-  });
-
-  return {
-    summary: response.choices[0]?.message?.content || "要約を生成できませんでした",
-    model: "gpt-4-turbo-preview",
-  };
-}
-
-async function generateWithAnthropic(
-  prompt: string
-): Promise<{ summary: string; model: string }> {
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
-
-  const response = await anthropic.messages.create({
-    model: "claude-3-5-sonnet-20241022",
-    max_tokens: 1000,
-    messages: [
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-    system:
-      "あなたは開発チームのパフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。",
-  });
-
-  const textContent = response.content.find((c) => c.type === "text");
-  return {
-    summary:
-      textContent && "text" in textContent
-        ? textContent.text
-        : "要約を生成できませんでした",
-    model: "claude-3-5-sonnet",
-  };
+  return generateWithGemini(prompt);
 }
 
 async function generateWithGemini(
   prompt: string
 ): Promise<{ summary: string; model: string }> {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEYが設定されていません");
+  }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const systemPrompt =
     "あなたは開発チームのパフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。";
@@ -129,6 +62,6 @@ async function generateWithGemini(
 
   return {
     summary: response.text() || "要約を生成できませんでした",
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash",
   };
 }

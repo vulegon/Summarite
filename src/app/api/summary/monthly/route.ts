@@ -3,9 +3,31 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getGitHubMetricsFromDB, getJiraMetricsFromDB } from "@/services/sync";
-import { generateSummary } from "@/services/ai";
 import { getMonthlyPeriod } from "@/lib/period";
-import { SummaryResponse } from "@/types";
+
+interface MetricsResponse {
+  github: {
+    prsOpened: number;
+    prsMerged: number;
+    reviews: number;
+    issuesOpened: number;
+    issuesClosed: number;
+    additions: number;
+    deletions: number;
+    commits: number;
+  };
+  jira: {
+    created: number;
+    done: number;
+    inProgress: number;
+    stalled: number;
+  };
+  periodStart: string;
+  periodEnd: string;
+  periodType: "weekly" | "monthly" | "custom";
+  hasSummary: boolean;
+  summary?: string;
+}
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -19,6 +41,7 @@ export async function GET(request: NextRequest) {
   const period = getMonthlyPeriod(monthsAgo);
 
   try {
+    // 既存のサマリーを確認
     const existingSummary = await prisma.summary.findFirst({
       where: {
         userId: session.user.id,
@@ -42,52 +65,22 @@ export async function GET(request: NextRequest) {
       period.end
     );
 
-    // 既存のサマリーがあれば返す
-    if (existingSummary) {
-      const response: SummaryResponse = {
-        github: githubMetrics,
-        jira: jiraMetrics,
-        summary: existingSummary.content,
-        periodStart: period.start.toISOString(),
-        periodEnd: period.end.toISOString(),
-        periodType: "monthly",
-      };
-
-      return NextResponse.json(response);
-    }
-
-    // サマリーを生成
-    const { summary, model } = await generateSummary(
-      githubMetrics,
-      jiraMetrics,
-      "monthly"
-    );
-
-    await prisma.summary.create({
-      data: {
-        userId: session.user.id,
-        periodStart: period.start,
-        periodEnd: period.end,
-        periodType: "monthly",
-        content: summary,
-        model,
-      },
-    });
-
-    const response: SummaryResponse = {
+    const response: MetricsResponse = {
       github: githubMetrics,
       jira: jiraMetrics,
-      summary,
       periodStart: period.start.toISOString(),
       periodEnd: period.end.toISOString(),
       periodType: "monthly",
+      hasSummary: !!existingSummary,
+      summary: existingSummary?.content,
     };
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Monthly summary error:", error);
+    console.error("Monthly metrics error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to generate summary" },
+      { error: `Failed to fetch metrics: ${errorMessage}` },
       { status: 500 }
     );
   }

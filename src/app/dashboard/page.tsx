@@ -3,7 +3,7 @@
 import { useSession, signOut, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
-import { GithubMetrics, JiraMetrics, AIProvider } from "@/types";
+import { GithubMetrics, JiraMetrics } from "@/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import Image from "next/image";
@@ -24,12 +24,12 @@ import {
   Chip,
   Tabs,
   Tab,
+  Tooltip,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
   SelectChangeEvent,
-  Tooltip,
 } from "@mui/material";
 
 interface MetricsData {
@@ -87,7 +87,7 @@ export default function Dashboard() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [aiProvider, setAiProvider] = useState<AIProvider>("gemini");
+  const [aiModel, setAiModel] = useState("gemini-2.0-flash");
   const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
   const [githubSyncStatus, setGithubSyncStatus] = useState<SyncStatus>("idle");
   const [githubSyncedAt, setGithubSyncedAt] = useState<Date | null>(null);
@@ -149,25 +149,21 @@ export default function Dashboard() {
           periodType: metrics.periodType,
           periodStart: metrics.periodStart,
           periodEnd: metrics.periodEnd,
-          provider: aiProvider,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to generate summary");
+        throw new Error(data.error || "Failed to generate summary");
       }
 
-      const data = await response.json();
       setSummary(data.summary);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSummaryLoading(false);
     }
-  };
-
-  const handleProviderChange = (event: SelectChangeEvent) => {
-    setAiProvider(event.target.value as AIProvider);
   };
 
   const handleDisconnect = async (provider: "github" | "jira") => {
@@ -301,9 +297,13 @@ export default function Dashboard() {
     return `${format(startDate, "M月d日", { locale: ja })} 〜 ${format(endDate, "M月d日", { locale: ja })}`;
   };
 
-  const aiProviders = [
-    { value: "gemini", label: "Gemini", description: "Google AI" },
+  const aiModels = [
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "Google" },
   ];
+
+  const handleModelChange = (event: SelectChangeEvent) => {
+    setAiModel(event.target.value);
+  };
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -1280,13 +1280,13 @@ export default function Dashboard() {
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: { xs: "100%", sm: "auto" } }}>
-                    <FormControl size="small" sx={{ minWidth: 140 }}>
-                      <InputLabel id="ai-provider-label">AIモデル</InputLabel>
+                    <FormControl size="small" sx={{ minWidth: 160 }}>
+                      <InputLabel id="ai-model-label">AIモデル</InputLabel>
                       <Select
-                        labelId="ai-provider-label"
-                        value={aiProvider}
+                        labelId="ai-model-label"
+                        value={aiModel}
                         label="AIモデル"
-                        onChange={handleProviderChange}
+                        onChange={handleModelChange}
                         sx={{
                           bgcolor: "rgba(0,0,0,0.02)",
                           "& .MuiOutlinedInput-notchedOutline": {
@@ -1294,9 +1294,9 @@ export default function Dashboard() {
                           },
                         }}
                       >
-                        {aiProviders.map((p) => (
-                          <MenuItem key={p.value} value={p.value}>
-                            {p.label}
+                        {aiModels.map((m) => (
+                          <MenuItem key={m.value} value={m.value}>
+                            {m.label}
                           </MenuItem>
                         ))}
                       </Select>

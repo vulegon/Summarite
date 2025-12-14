@@ -25,7 +25,6 @@ export interface SummaryResponse {
   periodType: "weekly" | "monthly";
 }
 
-export type AIProvider = "openai" | "anthropic" | "gemini";
 
 export interface Period {
   start: Date;
