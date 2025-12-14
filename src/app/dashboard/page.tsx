@@ -87,7 +87,7 @@ export default function Dashboard() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [aiModel, setAiModel] = useState("gemini-2.0-flash");
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash");
   const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
   const [githubSyncStatus, setGithubSyncStatus] = useState<SyncStatus>("idle");
   const [githubSyncedAt, setGithubSyncedAt] = useState<Date | null>(null);
@@ -298,7 +298,7 @@ export default function Dashboard() {
   };
 
   const aiModels = [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "Google" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" },
   ];
 
   const handleModelChange = (event: SelectChangeEvent) => {

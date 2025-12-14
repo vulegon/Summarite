@@ -52,7 +52,7 @@ async function generateWithGemini(
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const systemPrompt =
     "あなたは開発チームのパフォーマンスアナリストです。データに基づいた建設的なフィードバックを提供します。";
@@ -62,6 +62,6 @@ async function generateWithGemini(
 
   return {
     summary: response.text() || "要約を生成できませんでした",
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
   };
 }
