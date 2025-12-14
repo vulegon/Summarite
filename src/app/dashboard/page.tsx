@@ -91,6 +91,8 @@ export default function Dashboard() {
   const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
   const [githubSyncStatus, setGithubSyncStatus] = useState<SyncStatus>("idle");
   const [githubSyncedAt, setGithubSyncedAt] = useState<Date | null>(null);
+  const [jiraSyncStatus, setJiraSyncStatus] = useState<SyncStatus>("idle");
+  const [jiraSyncedAt, setJiraSyncedAt] = useState<Date | null>(null);
   const [customStartDate, setCustomStartDate] = useState(getDefaultDates().start);
   const [customEndDate, setCustomEndDate] = useState(getDefaultDates().end);
   const mounted = useSyncExternalStore(
@@ -195,13 +197,15 @@ export default function Dashboard() {
         const data = await response.json();
         setGithubSyncStatus(data.github.status);
         setGithubSyncedAt(data.github.syncedAt ? new Date(data.github.syncedAt) : null);
+        setJiraSyncStatus(data.jira.status);
+        setJiraSyncedAt(data.jira.syncedAt ? new Date(data.jira.syncedAt) : null);
       }
     } catch (err) {
       console.error("Failed to fetch sync status:", err);
     }
   }, []);
 
-  // 再取得ボタンのハンドラ
+  // 再取得ボタンのハンドラ（GitHub）
   const handleRefreshGitHub = async () => {
     try {
       const response = await fetch("/api/metrics/sync", {
@@ -218,23 +222,40 @@ export default function Dashboard() {
     }
   };
 
+  // 再取得ボタンのハンドラ（Jira）
+  const handleRefreshJira = async () => {
+    try {
+      const response = await fetch("/api/metrics/jira-sync", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start Jira sync");
+      }
+
+      setJiraSyncStatus("syncing");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
   // 同期状態をポーリング
   useEffect(() => {
-    if (githubSyncStatus === "syncing") {
+    if (githubSyncStatus === "syncing" || jiraSyncStatus === "syncing") {
       const interval = setInterval(async () => {
         await fetchSyncStatus();
       }, 2000);
 
       return () => clearInterval(interval);
     }
-  }, [githubSyncStatus, fetchSyncStatus]);
+  }, [githubSyncStatus, jiraSyncStatus, fetchSyncStatus]);
 
   // 同期完了時にメトリクスを再取得
   useEffect(() => {
-    if (githubSyncStatus === "completed") {
+    if (githubSyncStatus === "completed" || jiraSyncStatus === "completed") {
       fetchMetrics();
     }
-  }, [githubSyncStatus, fetchMetrics]);
+  }, [githubSyncStatus, jiraSyncStatus, fetchMetrics]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -554,44 +575,8 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 } }}>
-        {/* Title Section */}
+        {/* Period Selection */}
         <Box sx={{ mb: { xs: 2, sm: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              alignItems: { xs: "flex-start", sm: "center" },
-              gap: { xs: 1, sm: 2 },
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 800,
-                color: "#1a1a2e",
-                letterSpacing: "-0.02em",
-                fontSize: { xs: "1.75rem", sm: "2.5rem", md: "3rem" },
-              }}
-            >
-              ダッシュボード
-            </Typography>
-            {metrics && (
-              <Chip
-                icon={<CalendarTodayIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                label={formatPeriod(metrics.periodStart, metrics.periodEnd)}
-                size="small"
-                sx={{
-                  bgcolor: "rgba(102, 126, 234, 0.1)",
-                  color: "#667eea",
-                  border: "1px solid rgba(102, 126, 234, 0.2)",
-                  "& .MuiChip-icon": { color: "#667eea" },
-                  fontSize: { xs: "0.7rem", sm: "0.8rem" },
-                }}
-              />
-            )}
-          </Box>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
             <Tabs
               value={activeTab}
@@ -620,7 +605,7 @@ export default function Dashboard() {
               <Tab label="カスタム" />
             </Tabs>
 
-            {activeTab === 2 && (
+            {activeTab === 2 ? (
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <input
                   type="date"
@@ -661,6 +646,22 @@ export default function Dashboard() {
                   取得
                 </Button>
               </Box>
+            ) : (
+              metrics && (
+                <Chip
+                  icon={<CalendarTodayIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label={formatPeriod(metrics.periodStart, metrics.periodEnd)}
+                  sx={{
+                    bgcolor: "rgba(102, 126, 234, 0.1)",
+                    color: "#667eea",
+                    border: "1px solid rgba(102, 126, 234, 0.2)",
+                    "& .MuiChip-icon": { color: "#667eea" },
+                    fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                    fontWeight: 600,
+                    py: 2,
+                  }}
+                />
+              )
             )}
           </Box>
         </Box>
@@ -1086,34 +1087,101 @@ export default function Dashboard() {
                     </Tooltip>
                   </Box>
                   {session.user?.hasJira && (
-                    <Button
-                      size="small"
-                      startIcon={disconnecting === "jira" ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />}
-                      onClick={() => handleDisconnect("jira")}
-                      disabled={disconnecting === "jira"}
-                      sx={{
-                        color: "rgba(0,0,0,0.4)",
-                        textTransform: "none",
-                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                        "&:hover": {
-                          color: "#ef4444",
-                          bgcolor: "rgba(239, 68, 68, 0.08)",
-                        },
-                      }}
-                    >
-                      {disconnecting === "jira" ? "解除中..." : "解除"}
-                    </Button>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {jiraSyncedAt && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "rgba(0,0,0,0.4)",
+                            fontSize: { xs: "0.6rem", sm: "0.7rem" },
+                            display: { xs: "none", sm: "block" },
+                          }}
+                        >
+                          {format(jiraSyncedAt, "M/d HH:mm", { locale: ja })}更新
+                        </Typography>
+                      )}
+                      <Button
+                        size="small"
+                        startIcon={
+                          jiraSyncStatus === "syncing" ? (
+                            <CircularProgress size={14} color="inherit" />
+                          ) : (
+                            <RefreshIcon />
+                          )
+                        }
+                        onClick={handleRefreshJira}
+                        disabled={jiraSyncStatus === "syncing"}
+                        sx={{
+                          color: jiraSyncStatus === "syncing" ? "#0052CC" : "rgba(0,0,0,0.5)",
+                          textTransform: "none",
+                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                          minWidth: "auto",
+                          "&:hover": {
+                            color: "#0052CC",
+                            bgcolor: "rgba(0, 82, 204, 0.08)",
+                          },
+                        }}
+                      >
+                        {jiraSyncStatus === "syncing" ? "同期中..." : "再取得"}
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={disconnecting === "jira" ? <CircularProgress size={14} color="inherit" /> : <LinkOffIcon />}
+                        onClick={() => handleDisconnect("jira")}
+                        disabled={disconnecting === "jira"}
+                        sx={{
+                          color: "rgba(0,0,0,0.4)",
+                          textTransform: "none",
+                          fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                          "&:hover": {
+                            color: "#ef4444",
+                            bgcolor: "rgba(239, 68, 68, 0.08)",
+                          },
+                        }}
+                      >
+                        {disconnecting === "jira" ? "解除中..." : "解除"}
+                      </Button>
+                    </Box>
                   )}
                 </Box>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                   {session.user?.hasJira ? (
-                    <Grid container spacing={{ xs: 1, sm: 2 }}>
-                      {jiraMetricsDisplay.map((metric) => (
-                        <Grid size={{ xs: 6, sm: 6 }} key={metric.label}>
-                          <MetricCard {...metric} />
-                        </Grid>
-                      ))}
-                    </Grid>
+                    <>
+                      {/* 同期中バナー */}
+                      {jiraSyncStatus === "syncing" && (
+                        <Box
+                          sx={{
+                            mb: 2,
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: "rgba(0, 82, 204, 0.1)",
+                            border: "1px solid rgba(0, 82, 204, 0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 1.5,
+                          }}
+                        >
+                          <CircularProgress size={18} sx={{ color: "#0052CC" }} />
+                          <Typography
+                            sx={{
+                              color: "#0052CC",
+                              fontWeight: 600,
+                              fontSize: { xs: "0.8rem", sm: "0.875rem" },
+                            }}
+                          >
+                            Jiraからデータを取得中...
+                          </Typography>
+                        </Box>
+                      )}
+                      <Grid container spacing={{ xs: 1, sm: 2 }}>
+                        {jiraMetricsDisplay.map((metric) => (
+                          <Grid size={{ xs: 6, sm: 6 }} key={metric.label}>
+                            <MetricCard {...metric} />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </>
                   ) : (
                     <Box
                       sx={{
