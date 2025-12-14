@@ -118,15 +118,15 @@ export class JiraService {
     const endDate = period.end.toISOString().split("T")[0];
 
     const [created, done, inProgress, stalled] = await Promise.all([
-      this.searchCount(`created >= "${startDate}" AND created <= "${endDate}"`),
+      this.searchCount(`assignee = currentUser() AND created >= "${startDate}" AND created <= "${endDate}"`),
       this.searchCount(
-        `status = Done AND resolutiondate >= "${startDate}" AND resolutiondate <= "${endDate}"`
+        `assignee = currentUser() AND status = Done AND resolutiondate >= "${startDate}" AND resolutiondate <= "${endDate}"`
       ),
       this.searchCount(
-        `status = "In Progress" AND updated >= "${startDate}" AND updated <= "${endDate}"`
+        `assignee = currentUser() AND status = "In Progress" AND updated >= "${startDate}" AND updated <= "${endDate}"`
       ),
       this.searchCount(
-        `status != Done AND updated < "${startDate}" AND created < "${startDate}"`
+        `assignee = currentUser() AND status != Done AND updated < "${startDate}" AND created < "${startDate}"`
       ),
     ]);
 

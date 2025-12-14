@@ -11,6 +11,8 @@ interface GenerateSummaryRequest {
   periodType: "weekly" | "monthly";
   periodStart: string;
   periodEnd: string;
+  hasGithub: boolean;
+  hasJira: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -22,13 +24,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: GenerateSummaryRequest = await request.json();
-    const { github, jira, periodType, periodStart, periodEnd } = body;
+    const { github, jira, periodType, periodStart, periodEnd, hasGithub, hasJira } = body;
 
-    const { summary, model } = await generateSummary(
+    const { summary, model } = await generateSummary({
       github,
       jira,
-      periodType
-    );
+      periodType,
+      hasGithub,
+      hasJira,
+    });
 
     // Save to database
     await prisma.summary.upsert({

@@ -1,15 +1,22 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GithubMetrics, JiraMetrics } from "@/types";
 
-function buildPrompt(
-  github: GithubMetrics,
-  jira: JiraMetrics,
-  periodType: "weekly" | "monthly"
-): string {
+interface GenerateSummaryOptions {
+  github: GithubMetrics;
+  jira: JiraMetrics;
+  periodType: "weekly" | "monthly";
+  hasGithub: boolean;
+  hasJira: boolean;
+}
+
+function buildPrompt(options: GenerateSummaryOptions): string {
+  const { github, jira, periodType, hasGithub, hasJira } = options;
   const periodLabel = periodType === "weekly" ? "週次" : "月次";
 
-  return `以下は開発チームの${periodLabel}活動データです。このデータを分析し、チームの成果と改善点を簡潔に要約してください。
+  let metricsSection = "";
 
+  if (hasGithub) {
+    metricsSection += `
 ## GitHub メトリクス
 - 作成したPR数: ${github.prsOpened}
 - マージされたPR数: ${github.prsMerged}
@@ -19,13 +26,21 @@ function buildPrompt(
 - コミット数: ${github.commits}
 - 追加行数: ${github.additions.toLocaleString()}行
 - 削除行数: ${github.deletions.toLocaleString()}行
+`;
+  }
 
+  if (hasJira) {
+    metricsSection += `
 ## Jira メトリクス
 - 作成したチケット数: ${jira.created}
 - 完了したチケット数: ${jira.done}
 - 進行中のチケット数: ${jira.inProgress}
 - 停滞しているチケット数: ${jira.stalled}
+`;
+  }
 
+  return `以下は開発チームの${periodLabel}活動データです。このデータを分析し、チームの成果と改善点を簡潔に要約してください。
+${metricsSection}
 以下の形式で要約を作成してください：
 1. 今期の主な成果（2-3文）
 2. 注目すべきポイント（ポジティブな点）
@@ -36,11 +51,9 @@ function buildPrompt(
 }
 
 export async function generateSummary(
-  github: GithubMetrics,
-  jira: JiraMetrics,
-  periodType: "weekly" | "monthly"
+  options: GenerateSummaryOptions
 ): Promise<{ summary: string; model: string }> {
-  const prompt = buildPrompt(github, jira, periodType);
+  const prompt = buildPrompt(options);
   return generateWithGemini(prompt);
 }
 

@@ -136,8 +136,12 @@ export default function Dashboard() {
     }
   }, [periodType, customStartDate, customEndDate]);
 
+  const hasGithub = !!session?.user?.hasGithub;
+  const hasJira = !!session?.user?.hasJira;
+  const canGenerateSummary = hasGithub || hasJira;
+
   const generateSummary = async () => {
-    if (!metrics) return;
+    if (!metrics || !canGenerateSummary) return;
 
     setSummaryLoading(true);
     try {
@@ -150,6 +154,8 @@ export default function Dashboard() {
           periodType: metrics.periodType,
           periodStart: metrics.periodStart,
           periodEnd: metrics.periodEnd,
+          hasGithub,
+          hasJira,
         }),
       });
 
@@ -1057,19 +1063,19 @@ export default function Dashboard() {
                       title={
                         <Box sx={{ p: 0.5 }}>
                           <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                            各項目の集計条件
+                            各項目の集計条件（自分が担当のチケットのみ）
                           </Typography>
                           <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
-                            • 作成: 期間内に作成されたチケット
+                            • 作成: 期間内に作成された自分担当のチケット
                           </Typography>
                           <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
-                            • 完了: 期間内に完了（Done）したチケット
+                            • 完了: 期間内に完了（Done）した自分担当のチケット
                           </Typography>
                           <Typography variant="caption" component="div" sx={{ mb: 0.5 }}>
-                            • 進行中: 期間内に更新された進行中のチケット
+                            • 進行中: 期間内に更新された自分担当の進行中チケット
                           </Typography>
                           <Typography variant="caption" component="div">
-                            • 停滞: 期間より前に作成され未完了のチケット
+                            • 停滞: 期間より前に作成され未完了の自分担当チケット
                           </Typography>
                         </Box>
                       }
@@ -1305,15 +1311,19 @@ export default function Dashboard() {
                     <Button
                       variant="contained"
                       onClick={generateSummary}
-                      disabled={summaryLoading}
+                      disabled={summaryLoading || !canGenerateSummary}
                       startIcon={summaryLoading ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}
                       sx={{
-                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        background: canGenerateSummary
+                          ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                          : "rgba(0,0,0,0.12)",
                         textTransform: "none",
                         fontWeight: 600,
                         px: 3,
                         "&:hover": {
-                          background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
+                          background: canGenerateSummary
+                            ? "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)"
+                            : "rgba(0,0,0,0.12)",
                         },
                       }}
                     >
@@ -1365,7 +1375,9 @@ export default function Dashboard() {
                     >
                       <AutoAwesomeIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
                       <Typography>
-                        上のボタンをクリックしてAI要約を生成してください
+                        {canGenerateSummary
+                          ? "上のボタンをクリックしてAI要約を生成してください"
+                          : "GitHubまたはJiraと連携してください"}
                       </Typography>
                     </Box>
                   )}
