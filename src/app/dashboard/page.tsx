@@ -61,6 +61,7 @@ import CommitIcon from "@mui/icons-material/Commit";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { SummariteLogo } from "@/components/icons/SummariteLogo";
+import ReactMarkdown from "react-markdown";
 
 type SyncStatus = "idle" | "syncing" | "completed" | "failed";
 
@@ -87,7 +88,7 @@ export default function Dashboard() {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [aiModel, setAiModel] = useState("gemini-2.0-flash");
+  const [aiModel, setAiModel] = useState("gemini-2.5-flash");
   const [disconnecting, setDisconnecting] = useState<"github" | "jira" | null>(null);
   const [githubSyncStatus, setGithubSyncStatus] = useState<SyncStatus>("idle");
   const [githubSyncedAt, setGithubSyncedAt] = useState<Date | null>(null);
@@ -298,7 +299,7 @@ export default function Dashboard() {
   };
 
   const aiModels = [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", provider: "Google" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "Google" },
   ];
 
   const handleModelChange = (event: SelectChangeEvent) => {
@@ -1322,16 +1323,38 @@ export default function Dashboard() {
                 </Box>
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   {summary ? (
-                    <Typography
+                    <Box
                       sx={{
                         color: "rgba(0,0,0,0.8)",
-                        whiteSpace: "pre-wrap",
                         lineHeight: { xs: 1.8, sm: 2 },
                         fontSize: { xs: "0.875rem", sm: "1rem" },
+                        "& h1, & h2, & h3, & h4": {
+                          color: "#1a1a2e",
+                          fontWeight: 700,
+                          mt: 2,
+                          mb: 1,
+                        },
+                        "& h1": { fontSize: "1.5rem" },
+                        "& h2": { fontSize: "1.25rem" },
+                        "& h3": { fontSize: "1.1rem" },
+                        "& ul, & ol": {
+                          pl: 3,
+                          my: 1,
+                        },
+                        "& li": {
+                          mb: 0.5,
+                        },
+                        "& p": {
+                          my: 1,
+                        },
+                        "& strong": {
+                          color: "#1a1a2e",
+                          fontWeight: 600,
+                        },
                       }}
                     >
-                      {summary}
-                    </Typography>
+                      <ReactMarkdown>{summary}</ReactMarkdown>
+                    </Box>
                   ) : (
                     <Box
                       sx={{
