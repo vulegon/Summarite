@@ -22,7 +22,7 @@ model User {
 
   accounts      Account[]
   githubEvents  GithubEvent[]
-  jiraMetrics   JiraMetric[]
+  jiraEvents    JiraEvent[]
   summaries     Summary[]
 
   @@map("users")
@@ -67,26 +67,32 @@ model GithubEvent {
   @@map("github_events")
 }
 
-model JiraMetric {
+model JiraEvent {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
-  periodStart DateTime @map("period_start")
-  periodEnd   DateTime @map("period_end")
-  periodType  String   @map("period_type")
+  eventType   String   @map("event_type") // "created", "done", "in_progress", "comment"
+  eventDate   DateTime @map("event_date")
+  issueKey    String   @map("issue_key") // e.g., "PROJ-123"
 
-  created     Int      @default(0)
-  done        Int      @default(0)
-  inProgress  Int      @default(0) @map("in_progress")
-  stalled     Int      @default(0)
+  // Jira固有のフィールド
+  projectKey  String?  @map("project_key")
+  projectName String?  @map("project_name")
+  issueType   String?  @map("issue_type") // "Story", "Bug", "Task"
+  priority    String?
+  status      String?
+  summary     String?
+  assignee    String?
+  reporter    String?
+  storyPoints Float?   @map("story_points")
 
-  rawData     Json?    @map("raw_data")
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, periodStart, periodEnd, periodType])
-  @@index([userId, periodType])
-  @@map("jira_metrics")
+  @@unique([userId, eventType, issueKey])
+  @@index([userId, eventDate])
+  @@index([userId, projectKey, eventDate])
+  @@map("jira_events")
 }
 
 model Summary {
