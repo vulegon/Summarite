@@ -144,6 +144,8 @@ export function PeriodSelector({
                 border: "1px solid rgba(0,0,0,0.2)",
                 fontSize: "0.875rem",
                 outline: "none",
+                backgroundColor: "#ffffff",
+                color: "#1a1a2e",
               }}
             />
             <Typography sx={{ color: "rgba(0,0,0,0.5)" }}>〜</Typography>
@@ -157,6 +159,8 @@ export function PeriodSelector({
                 border: "1px solid rgba(0,0,0,0.2)",
                 fontSize: "0.875rem",
                 outline: "none",
+                backgroundColor: "#ffffff",
+                color: "#1a1a2e",
               }}
             />
             <Button
