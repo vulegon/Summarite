@@ -120,13 +120,13 @@ export class JiraService {
     const [created, done, inProgress, stalled] = await Promise.all([
       this.searchCount(`assignee = currentUser() AND created >= "${startDate}" AND created <= "${endDate}"`),
       this.searchCount(
-        `assignee = currentUser() AND status = Done AND resolutiondate >= "${startDate}" AND resolutiondate <= "${endDate}"`
+        `assignee = currentUser() AND statusCategory = Done AND resolutiondate >= "${startDate}" AND resolutiondate <= "${endDate}"`
       ),
       this.searchCount(
-        `assignee = currentUser() AND status = "In Progress" AND updated >= "${startDate}" AND updated <= "${endDate}"`
+        `assignee = currentUser() AND statusCategory = "In Progress" AND updated >= "${startDate}" AND updated <= "${endDate}"`
       ),
       this.searchCount(
-        `assignee = currentUser() AND status != Done AND updated < "${startDate}" AND created < "${startDate}"`
+        `assignee = currentUser() AND statusCategory != Done AND updated < "${startDate}" AND created < "${startDate}"`
       ),
     ]);
 
@@ -172,9 +172,9 @@ export class JiraService {
     }
     console.log(`[JiraService] Fetched ${createdIssues.length} created issues`);
 
-    // 2. 期間内に完了した自分担当のチケット
+    // 2. 期間内に完了した自分担当のチケット（statusCategory = Doneを使用）
     const doneIssues = await this.searchIssues(
-      `assignee = currentUser() AND status = Done AND resolutiondate >= "${fromDate}" AND resolutiondate <= "${toDate}"`,
+      `assignee = currentUser() AND statusCategory = Done AND resolutiondate >= "${fromDate}" AND resolutiondate <= "${toDate}"`,
       storyPointsFieldId
     );
     for (const issue of doneIssues) {
@@ -184,9 +184,9 @@ export class JiraService {
     }
     console.log(`[JiraService] Fetched ${doneIssues.length} done issues`);
 
-    // 3. 期間内にIn Progressになった自分担当のチケット
+    // 3. 期間内にIn Progressになった自分担当のチケット（statusCategory = "In Progress"を使用）
     const inProgressIssues = await this.searchIssues(
-      `assignee = currentUser() AND status = "In Progress" AND updated >= "${fromDate}" AND updated <= "${toDate}"`,
+      `assignee = currentUser() AND statusCategory = "In Progress" AND updated >= "${fromDate}" AND updated <= "${toDate}"`,
       storyPointsFieldId
     );
     for (const issue of inProgressIssues) {

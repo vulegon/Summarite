@@ -7,7 +7,6 @@ import {
   getSyncStatus as getSyncStatusFromDB,
 } from "@/services/sync";
 import { getWeeklyPeriod, getMonthlyPeriod } from "@/lib/period";
-import { JiraService, getJiraAccessToken } from "@/services/jira";
 import { GithubMetrics, JiraMetrics } from "@/types";
 
 export type PeriodType = "weekly" | "monthly" | "custom";
@@ -78,26 +77,11 @@ export async function getMetrics(
       endDate
     );
 
-    let jiraMetrics: JiraMetrics;
-
-    if (periodType === "custom") {
-      jiraMetrics = { created: 0, done: 0, inProgress: 0, stalled: 0 };
-      const jiraToken = await getJiraAccessToken(session.user.id);
-      if (jiraToken) {
-        const jiraService = new JiraService(jiraToken);
-        jiraMetrics = await jiraService.getMetrics({
-          start: startDate,
-          end: endDate,
-          type: "custom" as const,
-        });
-      }
-    } else {
-      jiraMetrics = await getJiraMetricsFromDB(
-        session.user.id,
-        startDate,
-        endDate
-      );
-    }
+    const jiraMetrics = await getJiraMetricsFromDB(
+      session.user.id,
+      startDate,
+      endDate
+    );
 
     let existingSummary = null;
     if (periodType !== "custom") {
