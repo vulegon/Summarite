@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Tabs, Tab, Chip, Button, Typography } from "@mui/material";
+import { Box, Tabs, Tab, Chip, Button, Typography, CircularProgress } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -62,6 +62,7 @@ export function PeriodSelector({
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaults = getDefaultDates();
+  const [isPending, startTransition] = useTransition();
 
   const [startDate, setStartDate] = useState(customStart ?? defaults.start);
   const [endDate, setEndDate] = useState(customEnd ?? defaults.end);
@@ -83,7 +84,9 @@ export function PeriodSelector({
         params.delete("end");
       }
 
-      router.push(`/dashboard?${params.toString()}`);
+      startTransition(() => {
+        router.push(`/dashboard?${params.toString()}`);
+      });
     },
     [router, searchParams, startDate, endDate]
   );
@@ -93,7 +96,9 @@ export function PeriodSelector({
     params.set("period", "custom");
     params.set("start", startDate);
     params.set("end", endDate);
-    router.push(`/dashboard?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/dashboard?${params.toString()}`);
+    });
   }, [router, searchParams, startDate, endDate]);
 
   const formatPeriod = useCallback((start: string, end: string) => {
@@ -144,6 +149,8 @@ export function PeriodSelector({
                 border: "1px solid rgba(0,0,0,0.2)",
                 fontSize: "0.875rem",
                 outline: "none",
+                backgroundColor: "#ffffff",
+                color: "#1a1a2e",
               }}
             />
             <Typography sx={{ color: "rgba(0,0,0,0.5)" }}>〜</Typography>
@@ -157,20 +164,28 @@ export function PeriodSelector({
                 border: "1px solid rgba(0,0,0,0.2)",
                 fontSize: "0.875rem",
                 outline: "none",
+                backgroundColor: "#ffffff",
+                color: "#1a1a2e",
               }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleFetchCustom}
+              disabled={isPending}
               sx={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 textTransform: "none",
                 fontWeight: 600,
                 ml: 1,
+                minWidth: 70,
+                "&.Mui-disabled": {
+                  background: "rgba(102, 126, 234, 0.5)",
+                  color: "#fff",
+                },
               }}
             >
-              取得
+              {isPending ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "取得"}
             </Button>
           </Box>
         ) : (
