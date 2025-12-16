@@ -65,10 +65,25 @@ src/
 
 - ESLint: `eslint-config-next/core-web-vitals` と `eslint-config-next/typescript` を使用
 - コードを変更した後は `npm run type-check` と `npm run lint` でエラーがないことを確認
-- Prismaスキーマを変更した場合は `npx prisma generate` を実行
 - **index.tsによるbarrel exportは使用しない** - 各モジュールは直接インポートする
   - Good: `import { GoogleIcon } from "@/components/icons/GoogleIcon"`
   - Bad: `import { GoogleIcon } from "@/components/icons"`
+
+## データベース（Prisma）
+
+**重要**: `prisma/schema.prisma`を変更した場合は、必ずマイグレーションを作成すること。
+
+```bash
+# スキーマ変更後、マイグレーションを作成
+npx prisma migrate dev --name <変更内容を表す名前>
+
+# 例: カラム追加の場合
+npx prisma migrate dev --name add_user_profile_fields
+```
+
+- `prisma db push`は開発中の一時的な確認のみに使用し、本番反映には使わない
+- マイグレーションファイル（`prisma/migrations/`）は必ずコミットする
+- 本番環境へのデプロイ時に`prisma migrate deploy`が自動実行される
 
 ## 環境変数
 
