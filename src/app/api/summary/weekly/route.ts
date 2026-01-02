@@ -27,6 +27,11 @@ interface MetricsResponse {
   periodType: "weekly" | "monthly" | "custom";
   hasSummary: boolean;
   summary?: string;
+  // 前週との比較用データ
+  previousGithub?: MetricsResponse["github"];
+  previousJira?: MetricsResponse["jira"];
+  previousPeriodStart?: string;
+  previousPeriodEnd?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -39,6 +44,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const weeksAgo = parseInt(searchParams.get("weeksAgo") || "0", 10);
   const period = getWeeklyPeriod(weeksAgo);
+  const previousPeriod = getWeeklyPeriod(weeksAgo + 1);
 
   try {
     // 既存のサマリーを確認
@@ -51,19 +57,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // DBからGitHubメトリクスを集計
-    const githubMetrics = await getGitHubMetricsFromDB(
-      session.user.id,
-      period.start,
-      period.end
-    );
+    // DBからGitHubメトリクスを集計（今週と前週を並列で取得）
+    const [githubMetrics, previousGithubMetrics] = await Promise.all([
+      getGitHubMetricsFromDB(session.user.id, period.start, period.end),
+      getGitHubMetricsFromDB(session.user.id, previousPeriod.start, previousPeriod.end),
+    ]);
 
-    // DBからJiraメトリクスを集計
-    const jiraMetrics = await getJiraMetricsFromDB(
-      session.user.id,
-      period.start,
-      period.end
-    );
+    // DBからJiraメトリクスを集計（今週と前週を並列で取得）
+    const [jiraMetrics, previousJiraMetrics] = await Promise.all([
+      getJiraMetricsFromDB(session.user.id, period.start, period.end),
+      getJiraMetricsFromDB(session.user.id, previousPeriod.start, previousPeriod.end),
+    ]);
 
     const response: MetricsResponse = {
       github: githubMetrics,
@@ -73,6 +77,11 @@ export async function GET(request: NextRequest) {
       periodType: "weekly",
       hasSummary: !!existingSummary,
       summary: existingSummary?.content,
+      // 前週データ
+      previousGithub: previousGithubMetrics,
+      previousJira: previousJiraMetrics,
+      previousPeriodStart: previousPeriod.start.toISOString(),
+      previousPeriodEnd: previousPeriod.end.toISOString(),
     };
 
     return NextResponse.json(response);

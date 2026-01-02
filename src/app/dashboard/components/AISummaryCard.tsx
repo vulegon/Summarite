@@ -61,6 +61,8 @@ export function AISummaryCard({
           periodEnd: metrics.periodEnd,
           hasGithub,
           hasJira,
+          previousGithub: metrics.previousGithub,
+          previousJira: metrics.previousJira,
         }),
       });
 
