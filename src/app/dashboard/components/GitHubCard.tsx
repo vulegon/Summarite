@@ -113,6 +113,13 @@ export function GitHubCard({
     }
   }, []);
 
+  // 初回表示時（まだ一度もsyncしていない場合）に自動でsyncを開始
+  useEffect(() => {
+    if (hasGithub && initialSyncStatus === "idle" && !initialSyncedAt) {
+      handleRefresh();
+    }
+  }, [hasGithub, initialSyncStatus, initialSyncedAt, handleRefresh]);
+
   useEffect(() => {
     if (syncStatus === "syncing") {
       const interval = setInterval(fetchSyncStatus, 2000);

@@ -101,6 +101,13 @@ export function JiraCard({
     }
   }, []);
 
+  // 初回表示時（まだ一度もsyncしていない場合）に自動でsyncを開始
+  useEffect(() => {
+    if (hasJira && initialSyncStatus === "idle" && !initialSyncedAt) {
+      handleRefresh();
+    }
+  }, [hasJira, initialSyncStatus, initialSyncedAt, handleRefresh]);
+
   useEffect(() => {
     if (syncStatus === "syncing") {
       const interval = setInterval(fetchSyncStatus, 2000);
