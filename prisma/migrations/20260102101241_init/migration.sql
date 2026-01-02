@@ -1,27 +1,34 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "name" TEXT,
+    "image" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "github_sync_status" TEXT DEFAULT 'idle',
+    "github_synced_at" TIMESTAMP(3),
+    "jira_sync_status" TEXT DEFAULT 'idle',
+    "jira_synced_at" TIMESTAMP(3),
 
-  - You are about to drop the `github_metrics` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `jira_metrics` table. If the table is not empty, all the data it contains will be lost.
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
 
-*/
--- DropForeignKey
-ALTER TABLE "github_metrics" DROP CONSTRAINT "github_metrics_user_id_fkey";
+-- CreateTable
+CREATE TABLE "accounts" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "provider_account_id" TEXT NOT NULL,
+    "access_token" TEXT,
+    "refresh_token" TEXT,
+    "expires_at" INTEGER,
+    "token_type" TEXT,
+    "scope" TEXT,
 
--- DropForeignKey
-ALTER TABLE "jira_metrics" DROP CONSTRAINT "jira_metrics_user_id_fkey";
-
--- AlterTable
-ALTER TABLE "users" ADD COLUMN     "github_sync_status" TEXT DEFAULT 'idle',
-ADD COLUMN     "github_synced_at" TIMESTAMP(3),
-ADD COLUMN     "jira_sync_status" TEXT DEFAULT 'idle',
-ADD COLUMN     "jira_synced_at" TIMESTAMP(3);
-
--- DropTable
-DROP TABLE "github_metrics";
-
--- DropTable
-DROP TABLE "jira_metrics";
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "github_events" (
@@ -60,6 +67,29 @@ CREATE TABLE "jira_events" (
     CONSTRAINT "jira_events_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "summaries" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "period_start" TIMESTAMP(3) NOT NULL,
+    "period_end" TIMESTAMP(3) NOT NULL,
+    "period_type" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "model" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "summaries_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE INDEX "accounts_user_id_idx" ON "accounts"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "accounts_provider_provider_account_id_key" ON "accounts"("provider", "provider_account_id");
+
 -- CreateIndex
 CREATE INDEX "github_events_user_id_event_date_idx" ON "github_events"("user_id", "event_date");
 
@@ -78,8 +108,20 @@ CREATE INDEX "jira_events_user_id_project_key_event_date_idx" ON "jira_events"("
 -- CreateIndex
 CREATE UNIQUE INDEX "jira_events_user_id_event_type_issue_key_key" ON "jira_events"("user_id", "event_type", "issue_key");
 
+-- CreateIndex
+CREATE INDEX "summaries_user_id_period_type_idx" ON "summaries"("user_id", "period_type");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "summaries_user_id_period_start_period_end_period_type_key" ON "summaries"("user_id", "period_start", "period_end", "period_type");
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
 -- AddForeignKey
 ALTER TABLE "github_events" ADD CONSTRAINT "github_events_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "jira_events" ADD CONSTRAINT "jira_events_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "summaries" ADD CONSTRAINT "summaries_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
