@@ -23,6 +23,11 @@ export interface SummaryResponse {
   periodStart: string;
   periodEnd: string;
   periodType: "weekly" | "monthly";
+  // 前期間との比較用データ（weekly/monthlyのみ）
+  previousGithub?: GithubMetrics;
+  previousJira?: JiraMetrics;
+  previousPeriodStart?: string;
+  previousPeriodEnd?: string;
 }
 
 

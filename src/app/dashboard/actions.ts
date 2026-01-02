@@ -19,6 +19,9 @@ export interface MetricsData {
   periodType: PeriodType;
   hasSummary: boolean;
   summary?: string;
+  // 前期間との比較用データ（weekly/monthlyのみ）
+  previousGithub?: GithubMetrics;
+  previousJira?: JiraMetrics;
 }
 
 export interface SyncStatusData {
@@ -45,16 +48,24 @@ export async function getMetrics(
 
   let startDate: Date;
   let endDate: Date;
+  let previousStartDate: Date | null = null;
+  let previousEndDate: Date | null = null;
   let dbPeriodType: "weekly" | "monthly" | "custom" = periodType;
 
   if (periodType === "weekly") {
     const period = getWeeklyPeriod(0);
+    const previousPeriod = getWeeklyPeriod(1);
     startDate = period.start;
     endDate = period.end;
+    previousStartDate = previousPeriod.start;
+    previousEndDate = previousPeriod.end;
   } else if (periodType === "monthly") {
     const period = getMonthlyPeriod(0);
+    const previousPeriod = getMonthlyPeriod(1);
     startDate = period.start;
     endDate = period.end;
+    previousStartDate = previousPeriod.start;
+    previousEndDate = previousPeriod.end;
   } else {
     if (!customStart || !customEnd) {
       const end = new Date();
@@ -68,20 +79,21 @@ export async function getMetrics(
       endDate.setHours(23, 59, 59, 999);
     }
     dbPeriodType = "custom";
+    // カスタム期間は比較なし
   }
 
   try {
-    const githubMetrics = await getGitHubMetricsFromDB(
-      session.user.id,
-      startDate,
-      endDate
-    );
-
-    const jiraMetrics = await getJiraMetricsFromDB(
-      session.user.id,
-      startDate,
-      endDate
-    );
+    // 今期のメトリクスと前期のメトリクスを並列で取得
+    const [githubMetrics, jiraMetrics, previousGithubMetrics, previousJiraMetrics] = await Promise.all([
+      getGitHubMetricsFromDB(session.user.id, startDate, endDate),
+      getJiraMetricsFromDB(session.user.id, startDate, endDate),
+      previousStartDate && previousEndDate
+        ? getGitHubMetricsFromDB(session.user.id, previousStartDate, previousEndDate)
+        : Promise.resolve(null),
+      previousStartDate && previousEndDate
+        ? getJiraMetricsFromDB(session.user.id, previousStartDate, previousEndDate)
+        : Promise.resolve(null),
+    ]);
 
     let existingSummary = null;
     if (periodType !== "custom") {
@@ -103,6 +115,8 @@ export async function getMetrics(
       periodType: dbPeriodType,
       hasSummary: !!existingSummary,
       summary: existingSummary?.content,
+      previousGithub: previousGithubMetrics ?? undefined,
+      previousJira: previousJiraMetrics ?? undefined,
     };
   } catch (error) {
     console.error("Failed to fetch metrics:", error);

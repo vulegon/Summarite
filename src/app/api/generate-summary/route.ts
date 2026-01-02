@@ -13,6 +13,9 @@ interface GenerateSummaryRequest {
   periodEnd: string;
   hasGithub: boolean;
   hasJira: boolean;
+  // 前期間との比較用データ（weekly/monthlyのみ）
+  previousGithub?: GithubMetrics;
+  previousJira?: JiraMetrics;
 }
 
 export async function POST(request: NextRequest) {
@@ -24,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: GenerateSummaryRequest = await request.json();
-    const { github, jira, periodType, periodStart, periodEnd, hasGithub, hasJira } = body;
+    const { github, jira, periodType, periodStart, periodEnd, hasGithub, hasJira, previousGithub, previousJira } = body;
 
     const { summary, model } = await generateSummary({
       github,
@@ -32,6 +35,8 @@ export async function POST(request: NextRequest) {
       periodType,
       hasGithub,
       hasJira,
+      previousGithub,
+      previousJira,
     });
 
     // Save to database
