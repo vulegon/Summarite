@@ -109,6 +109,89 @@ export function PeriodSelector({
 
   return (
     <Box sx={{ mb: { xs: 2, sm: 4 } }}>
+      {/* タブ切り替え中のローディングオーバーレイ */}
+      {isPending && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: "rgba(245, 247, 250, 0.85)",
+            backdropFilter: "blur(8px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 3,
+              p: 4,
+              borderRadius: 4,
+              bgcolor: "rgba(255, 255, 255, 0.9)",
+              boxShadow: "0 8px 32px rgba(102, 126, 234, 0.15)",
+              border: "1px solid rgba(102, 126, 234, 0.1)",
+            }}
+          >
+            <Box
+              sx={{
+                position: "relative",
+                width: 60,
+                height: 60,
+              }}
+            >
+              <CircularProgress
+                size={60}
+                thickness={2}
+                sx={{
+                  color: "rgba(102, 126, 234, 0.2)",
+                  position: "absolute",
+                }}
+              />
+              <CircularProgress
+                size={60}
+                thickness={2}
+                sx={{
+                  color: "#667eea",
+                  position: "absolute",
+                  "& .MuiCircularProgress-circle": {
+                    strokeLinecap: "round",
+                  },
+                }}
+              />
+            </Box>
+            <Box sx={{ textAlign: "center" }}>
+              <Typography
+                sx={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontWeight: 700,
+                  fontSize: "1.1rem",
+                  mb: 0.5,
+                }}
+              >
+                データを取得しています
+              </Typography>
+              <Typography
+                sx={{
+                  color: "rgba(0, 0, 0, 0.5)",
+                  fontSize: "0.85rem",
+                }}
+              >
+                しばらくお待ちください
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
         <Tabs
           value={activeTab}
